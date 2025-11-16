@@ -1,73 +1,49 @@
-# React + TypeScript + Vite
+# hAIfu Client
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+hAIfu 플랫폼의 클라이언트 애플리케이션입니다.
 
-Currently, two official plugins are available:
+## 시작하기
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+### 1. 환경 변수 설정
 
-## React Compiler
+프로젝트 루트 디렉토리에 `.env.local` 파일을 생성하고, `.env.example` 파일의 내용을 참고하여 필요한 환경 변수를 설정하세요.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+cp .env.example .env.local
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+`.env.local` 파일을 열어 다음 환경 변수들을 설정하세요:
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+- `VITE_API_BASE_URL`: API 서버의 기본 URL (예: `http://localhost:8080/api`)
+- `VITE_USE_MOCK_DATA`: Mock 데이터 사용 여부 (`true` 또는 `false`)
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### 2. 의존성 설치
+
+```bash
+npm install
 ```
+
+### 3. 개발 서버 실행
+
+```bash
+npm run dev
+```
+
+개발 서버가 시작되면 브라우저에서 `http://localhost:3000` (또는 터미널에 표시된 주소)로 접속할 수 있습니다.
+
+## 사용 가능한 스크립트
+
+- `npm run dev`: 개발 서버를 시작합니다 (Hot Module Replacement 지원) => 개발서버 실행은 이걸로 하면 됩니다.
+- `npm run build`: 프로덕션 빌드를 생성합니다
+- `npm run preview`: 빌드된 애플리케이션을 미리 볼 수 있습니다
+- `npm run lint`: ESLint를 실행하여 코드를 검사합니다
+
+## 기술 스택
+
+- **React 19**: UI 라이브러리
+- **TypeScript**: 타입 안정성을 위한 언어
+- **Vite**: 빠른 빌드 도구
+- **React Router**: 클라이언트 사이드 라우팅
+- **Axios**: HTTP 클라이언트
+
+---
