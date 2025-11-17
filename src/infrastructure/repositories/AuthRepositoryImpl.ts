@@ -81,7 +81,7 @@ export class AuthRepositoryImpl implements AuthRepository {
 
   async getCurrentUser(_token: string): Promise<User> {
     try {
-      const response = await apiClient.get<AuthMeResponse | User>('/api/auth/me');
+      const response = await apiClient.get<AuthMeResponse | User>('api/auth/me');
 
       // Support both response formats: { user: User } or User directly
       if ('user' in response && response.user) {

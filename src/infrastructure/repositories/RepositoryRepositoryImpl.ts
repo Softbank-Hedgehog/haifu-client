@@ -21,7 +21,7 @@ export class RepositoryRepositoryImpl implements RepositoryRepository {
     }
 
     const queryString = params.toString();
-    const url = `/api/repos/list${queryString ? `?${queryString}` : ''}`;
+    const url = `api/repos/list${queryString ? `?${queryString}` : ''}`;
 
     const response = await apiClient.get<ListRepositoriesResponse>(url);
     
