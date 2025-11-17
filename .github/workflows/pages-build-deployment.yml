@@ -2,7 +2,8 @@ name: Deploy Vite app to GitHub Pages
 
 on:
   push:
-    branches: [dev]
+    branches:
+      - dev
   workflow_dispatch:
 
 permissions:
@@ -12,7 +13,7 @@ permissions:
 
 concurrency:
   group: "pages"
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -21,41 +22,43 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
-          cache: "npm"
+          node-version: '20'
+          cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
 
       - name: Create .env.production file
         run: |
-            cat << 'EOF' > .env.production
-            VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }} /
-            VITE_USE_MOCK_DATA=${{ secrets.VITE_USE_MOCK_DATA }} /
-            EOF
-
+          cat << 'EOF' > .env.production
+          VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}
+          VITE_USE_MOCK_DATA=${{ secrets.VITE_USE_MOCK_DATA }}
+          EOF
 
       - name: Build
         run: npm run build
+        env:
+          NODE_ENV: production
 
-      - name: SPA fallback
-        run: cp dist/index.html dist/404.html
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: dist
+          path: './dist'
 
   deploy:
-    needs: build
-    runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
