@@ -9,7 +9,7 @@ import type {
 
 export class ProjectRepositoryImpl implements ProjectRepository {
   async createProject(request: CreateProjectRequest): Promise<Project> {
-    const response = await apiClient.post<{ project: Project }>('/api/projects', request);
+    const response = await apiClient.post<{ project: Project }>('api/projects', request);
     return {
       ...response.project,
       createdAt: new Date(response.project.createdAt),
@@ -18,7 +18,7 @@ export class ProjectRepositoryImpl implements ProjectRepository {
   }
 
   async listProjects(): Promise<Project[]> {
-    const response = await apiClient.get<ListProjectsResponse>('/api/projects');
+    const response = await apiClient.get<ListProjectsResponse>('api/projects');
     return response.projects.map((p) => ({
       ...p,
       createdAt: new Date(p.createdAt),
@@ -27,7 +27,7 @@ export class ProjectRepositoryImpl implements ProjectRepository {
   }
 
   async getProject(id: string): Promise<Project> {
-    const response = await apiClient.get<GetProjectResponse>(`/api/projects/${id}`);
+    const response = await apiClient.get<GetProjectResponse>(`api/projects/${id}`);
     return {
       ...response.project,
       createdAt: new Date(response.project.createdAt),

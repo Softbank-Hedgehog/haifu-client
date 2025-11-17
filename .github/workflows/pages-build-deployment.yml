@@ -33,8 +33,8 @@ jobs:
       - name: Create .env.production file
         run: |
             cat << 'EOF' > .env
-            VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }} /
-            VITE_USE_MOCK_DATA=${{ secrets.VITE_USE_MOCK_DATA }} /
+            VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}/
+            VITE_USE_MOCK_DATA=${{ secrets.VITE_USE_MOCK_DATA }}/
             EOF
 
 

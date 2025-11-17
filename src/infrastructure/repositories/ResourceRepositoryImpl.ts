@@ -10,7 +10,7 @@ import type {
 
 export class ResourceRepositoryImpl implements ResourceRepository {
   async createResource(request: CreateResourceRequest): Promise<Resource> {
-    const response = await apiClient.post<{ resource: Resource }>('/api/resources', request);
+    const response = await apiClient.post<{ resource: Resource }>('api/resources', request);
     return {
       ...response.resource,
       createdAt: new Date(response.resource.createdAt),
@@ -20,7 +20,7 @@ export class ResourceRepositoryImpl implements ResourceRepository {
 
   async listResources(projectId: string): Promise<Resource[]> {
     const response = await apiClient.get<ListResourcesResponse>(
-      `/api/resources?projectId=${projectId}`
+      `api/resources?projectId=${projectId}`
     );
     return response.resources.map((r) => ({
       ...r,
@@ -34,7 +34,7 @@ export class ResourceRepositoryImpl implements ResourceRepository {
     deployments: Deployment[];
     pipelines: Pipeline[];
   }> {
-    const response = await apiClient.get<GetResourceResponse>(`/api/resources/${id}`);
+    const response = await apiClient.get<GetResourceResponse>(`api/resources/${id}`);
     return {
       resource: {
         ...response.resource,
