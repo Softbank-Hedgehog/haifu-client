@@ -13,16 +13,10 @@ const CallbackPage: React.FC = () => {
   const authUseCase = new AuthUseCase(authRepository);
 
   useEffect(() => {
-    // 1. 토큰 파라미터 확인 (백엔드가 RedirectResponse로 전달)
     const token = searchParams.get('token') || searchParams.get('access_token');
-    
-    // 2. 에러 파라미터 확인
-    const error = searchParams.get('error');
-    
-    // 3. code 파라미터 확인 (백엔드 수정 전까지 대비용, 또는 GitHub가 직접 프론트엔드로 리다이렉트하는 경우)
+    const error = searchParams.get('error');    
     const code = searchParams.get('code');
 
-    // 에러 처리
     if (error) {
       const errorMessage = searchParams.get('message') || 'Authentication failed. Please try again.';
       console.error('OAuth callback error:', error, errorMessage);
@@ -32,21 +26,18 @@ const CallbackPage: React.FC = () => {
       return;
     }
 
-    // 토큰이 있으면 바로 저장 (백엔드가 RedirectResponse로 리다이렉트한 경우)
     if (token) {
       console.log('Received token from backend redirect');
       handleTokenCallback(token);
       return;
     }
     
-    // code가 있으면 POST 요청으로 토큰 받기 (백엔드 수정 전까지 또는 GitHub 직접 리다이렉트)
     if (code) {
       console.log('Received code from callback, requesting token from backend');
       handleCodeCallback(code);
       return;
     }
     
-    // 둘 다 없으면 로그인 페이지로 리다이렉트
     console.error('No token or code received from callback');
     alert('No authentication data received. Please try logging in again.');
     navigate('/login');
