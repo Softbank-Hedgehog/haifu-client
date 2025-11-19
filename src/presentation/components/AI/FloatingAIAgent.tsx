@@ -27,7 +27,7 @@ const FloatingAIAgent: React.FC = () => {
       
       const newWidth = window.innerWidth - e.clientX;
       const minWidth = 48; 
-      const maxWidth = 384; 
+      const maxWidth = 432; 
       
       if (newWidth >= minWidth && newWidth <= maxWidth) {
         setSidebarWidth(newWidth);

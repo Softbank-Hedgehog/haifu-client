@@ -12,34 +12,40 @@ export class RepositoryRepositoryImpl implements RepositoryRepository {
     page: number;
     total: number;
   }> {
-    const params = new URLSearchParams();
-    if (request?.page) {
-      params.append('page', String(request.page));
-    }
-    if (request?.per_page) {
-      params.append('per_page', String(request.per_page));
-    }
+    try {
+      const params = new URLSearchParams();
+      if (request?.page) {
+        params.append('page', String(request.page));
+      }
+      if (request?.per_page) {
+        params.append('per_page', String(request.per_page));
+      }
 
-    const queryString = params.toString();
-    const url = `api/repos/list${queryString ? `?${queryString}` : ''}`;
+      const queryString = params.toString();
+      const url = `api/repos/list${queryString ? `?${queryString}` : ''}`;
 
-    const response = await apiClient.get<ListRepositoriesResponse>(url);
-    
-    return {
-      repositories: response.repositories.map((repo) => ({
-        id: repo.id,
-        name: repo.name,
-        fullName: repo.full_name,
-        description: repo.description,
-        htmlUrl: repo.html_url,
-        language: repo.language,
-        private: repo.private,
-        updatedAt: new Date(repo.updated_at),
-      })),
-      page: response.page,
-      total: response.total,
-    };
+      const response = await apiClient.get<ListRepositoriesResponse>(url);
+      
+      return {
+        repositories: response.repositories.map((repo) => ({
+          id: repo.id,
+          name: repo.name,
+          fullName: repo.full_name,
+          description: repo.description,
+          htmlUrl: repo.html_url,
+          language: repo.language,
+          private: repo.private,
+          updatedAt: new Date(repo.updated_at),
+        })),
+        page: response.page,
+        total: response.total,
+      };
+    } catch (error: any) {
+      console.error('Failed to list repositories:', error);
+      throw new Error(error.message || 'Failed to list repositories');
+    }
   }
 }
+
 
 

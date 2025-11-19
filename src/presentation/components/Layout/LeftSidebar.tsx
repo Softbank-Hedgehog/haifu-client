@@ -48,7 +48,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
       
       const newWidth = e.clientX;
       const minWidth = 48; // 3rem
-      const maxWidth = 384; // 24rem
+      const maxWidth = 432; // 24rem
       
       if (newWidth >= minWidth && newWidth <= maxWidth) {
         setSidebarWidth(newWidth);

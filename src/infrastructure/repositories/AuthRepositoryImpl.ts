@@ -12,24 +12,25 @@ import type {
 export class AuthRepositoryImpl implements AuthRepository {
   async getGitHubLoginUrl(): Promise<string> {
     try {
-      const response = await apiClient.get<GitHubLoginResponse | { url?: string; loginUrl?: string }>('/api/auth/github/login');
+
+      const response = await apiClient.get<GitHubLoginResponse | { url?: string; loginUrl?: string } | string>('/api/auth/github/login');
+      
       // Support multiple response formats
       if (typeof response === 'string') {
         return response;
       }
-      if ('loginUrl' in response && response.loginUrl) {
-        return response.loginUrl;
-      }
-      if ('url' in response && response.url) {
-        return response.url;
+      if (response && typeof response === 'object') {
+        if ('loginUrl' in response && response.loginUrl) {
+          return response.loginUrl;
+        }
+        if ('url' in response && response.url) {
+          return response.url;
+        }
       }
       throw new Error('Invalid response format from login endpoint');
     } catch (error: any) {
       console.error('Failed to get GitHub login URL:', error);
-      if (error.response?.data) {
-        throw new Error(error.response.data.message || 'Failed to get login URL');
-      }
-      throw error;
+      throw new Error(error.message || 'Failed to get login URL');
     }
   }
 
@@ -44,17 +45,19 @@ export class AuthRepositoryImpl implements AuthRepository {
       // Support multiple response formats
       // access_token, token, jwt_token 등 다양한 형식 지원
       let jwtToken: string | null = null;
-      if ('access_token' in response && response.access_token) {
-        jwtToken = response.access_token;
-      } else if ('token' in response && response.token) {
-        jwtToken = response.token;
-      } else if ('jwt_token' in response && response.jwt_token) {
-        jwtToken = response.jwt_token;
+      if (response && typeof response === 'object') {
+        if ('access_token' in response && response.access_token) {
+          jwtToken = response.access_token;
+        } else if ('token' in response && response.token) {
+          jwtToken = response.token;
+        } else if ('jwt_token' in response && response.jwt_token) {
+          jwtToken = response.jwt_token;
+        }
       } else if (typeof response === 'string') {
         jwtToken = response;
       }
       
-      const user = 'user' in response && response.user ? response.user : null;
+      const user = response && typeof response === 'object' && 'user' in response && response.user ? response.user : null;
       
       if (!jwtToken) {
         console.error('Response:', response);
@@ -71,36 +74,28 @@ export class AuthRepositoryImpl implements AuthRepository {
       };
     } catch (error: any) {
       console.error('Failed to handle GitHub callback:', error);
-      console.error('Error details:', error.response?.data || error.message);
-      if (error.response?.data) {
-        throw new Error(error.response.data.message || 'Failed to authenticate');
-      }
-      throw error;
+      throw new Error(error.message || 'Failed to authenticate');
     }
   }
 
   async getCurrentUser(_token: string): Promise<User> {
     try {
+
       const response = await apiClient.get<AuthMeResponse | User>('api/auth/me');
 
       // Support both response formats: { user: User } or User directly
-      if ('user' in response && response.user) {
-        return response.user;
-      }
-      if ('id' in response && 'name' in response) {
-        return response as User;
+      if (response && typeof response === 'object') {
+        if ('user' in response && response.user) {
+          return response.user;
+        }
+        if ('id' in response && 'name' in response) {
+          return response as User;
+        }
       }
       throw new Error('Invalid response format from me endpoint');
     } catch (error: any) {
       console.error('Failed to get current user:', error);
-      if (error.response?.status === 401) {
-        TokenStorage.remove();
-        throw new Error('Authentication required');
-      }
-      if (error.response?.data) {
-        throw new Error(error.response.data.message || 'Failed to get user info');
-      }
-      throw error;
+      throw new Error(error.message || 'Failed to get user info');
     }
   }
 
