@@ -63,7 +63,7 @@ const FloatingAIAgent: React.FC = () => {
     if (!isCollapsed) {
       setSidebarWidth(48);
     } else {
-      setSidebarWidth(256);
+      setSidebarWidth(384);
     }
   };
 
