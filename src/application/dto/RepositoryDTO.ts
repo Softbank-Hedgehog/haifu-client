@@ -14,11 +14,15 @@ export interface RepositoryDTO {
   updated_at: string;
 }
 
+// 서버 응답 형식: { success: true, data: { items: RepositoryDTO[], page: number, per_page: number, total: number } }
+// ApiClient가 data 필드를 추출하므로, 실제로 받는 타입은 아래와 같음
 export interface ListRepositoriesResponse {
-  repositories: RepositoryDTO[];
+  items: RepositoryDTO[];
   page: number;
+  per_page: number;
   total: number;
 }
+
 
 
 

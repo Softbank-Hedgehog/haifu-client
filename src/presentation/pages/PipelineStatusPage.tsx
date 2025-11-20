@@ -25,10 +25,10 @@ const PipelineStatusPage: React.FC = () => {
   }, [resourceId]);
 
   const loadPipelines = async () => {
-    if (!resourceId) return;
+    if (!resourceId || !projectId) return;
     try {
       setLoading(true);
-      const data = await resourceUseCase.getResource(resourceId);
+      const data = await resourceUseCase.getResource(resourceId, projectId);
       setPipelines(data.pipelines);
     } catch (error) {
       console.error('Failed to load pipelines:', error);
