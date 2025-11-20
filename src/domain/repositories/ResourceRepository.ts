@@ -5,7 +5,7 @@ import type { CreateResourceRequest } from '../../application/dto/ResourceDTO';
 export interface ResourceRepository {
   createResource(request: CreateResourceRequest): Promise<Resource>;
   listResources(projectId: string): Promise<Resource[]>;
-  getResource(id: string): Promise<{
+  getResource(id: string, projectId: string): Promise<{
     resource: Resource;
     deployments: Deployment[];
     pipelines: Pipeline[];

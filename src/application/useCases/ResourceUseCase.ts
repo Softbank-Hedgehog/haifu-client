@@ -18,12 +18,12 @@ export class ResourceUseCase {
     return this.resourceRepository.listResources(projectId);
   }
 
-  async getResource(id: string): Promise<{
+  async getResource(id: string, projectId: string): Promise<{
     resource: Resource;
     deployments: Deployment[];
     pipelines: Pipeline[];
   }> {
-    return this.resourceRepository.getResource(id);
+    return this.resourceRepository.getResource(id, projectId);
   }
 }
 

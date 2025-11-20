@@ -27,7 +27,7 @@ export class RepositoryRepositoryImpl implements RepositoryRepository {
       const response = await apiClient.get<ListRepositoriesResponse>(url);
       
       return {
-        repositories: response.repositories.map((repo) => ({
+        repositories: response.items.map((repo) => ({
           id: repo.id,
           name: repo.name,
           fullName: repo.full_name,

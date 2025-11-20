@@ -4,7 +4,6 @@ import type { Deployment, Pipeline } from '../../domain/entities/Deployment';
 import { apiClient } from '../api/ApiClient';
 import type { CreateResourceRequest } from '../../application/dto/ResourceDTO';
 
-// 서버 응답 형식 (snake_case)
 interface ServerServiceResponse {
   id: string;
   project_id: string;
@@ -92,9 +91,13 @@ export class ResourceRepositoryImpl implements ResourceRepository {
 
   async listResources(projectId: string): Promise<Resource[]> {
     try {
-      // 서버 응답: { success: true, data: { items: ServiceResponse[], page: number, per_page: number, total: number } }
-      // ApiClient 반환: { items: ServiceResponse[], page: number, per_page: number, total: number }
-      const response = await apiClient.get<import('../../application/dto/ResourceDTO').ListResourcesResponse>(
+      interface ListResourcesData {
+        items: ServerServiceResponse[];
+        page: number;
+        per_page: number;
+        total: number;
+      }
+      const response = await apiClient.get<ListResourcesData>(
         `api/projects/${projectId}/services`
       );
 
