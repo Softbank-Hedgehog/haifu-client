@@ -11,6 +11,11 @@ export interface CreateResourceRequest {
   config: ServiceDeploymentConfig | DatabaseConfig;
 }
 
+export interface UpdateResourceRequest {
+  name?: string;
+  config?: Partial<ServiceDeploymentConfig | DatabaseConfig>;
+}
+
 export interface ServiceDeploymentConfig {
   repository: GitHubRepository;
   techStack?: TechStack;

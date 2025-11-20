@@ -1,6 +1,6 @@
 import type { ProjectRepository } from '../../domain/repositories/ProjectRepository';
 import type { Project } from '../../domain/entities/Project';
-import type { CreateProjectRequest } from '../../application/dto/ProjectDTO';
+import type { CreateProjectRequest, UpdateProjectRequest } from '../../application/dto/ProjectDTO';
 
 export class MockProjectRepository implements ProjectRepository {
   private mockProjects: Project[] = [
@@ -72,6 +72,39 @@ export class MockProjectRepository implements ProjectRepository {
       throw new Error(`Project with id ${id} not found`);
     }
     return { ...project };
+  }
+
+  async updateProject(id: string, request: UpdateProjectRequest): Promise<Project> {
+    // Simulate API delay
+    await new Promise((resolve) => setTimeout(resolve, 400));
+
+    const projectIndex = this.mockProjects.findIndex((p) => p.id === id);
+    if (projectIndex === -1) {
+      throw new Error(`Project with id ${id} not found`);
+    }
+
+    const existingProject = this.mockProjects[projectIndex];
+    const updatedProject: Project = {
+      ...existingProject,
+      name: request.name ?? existingProject.name,
+      description: request.description ?? existingProject.description,
+      updatedAt: new Date(),
+    };
+
+    this.mockProjects[projectIndex] = updatedProject;
+    return { ...updatedProject };
+  }
+
+  async deleteProject(id: string): Promise<void> {
+    // Simulate API delay
+    await new Promise((resolve) => setTimeout(resolve, 300));
+
+    const projectIndex = this.mockProjects.findIndex((p) => p.id === id);
+    if (projectIndex === -1) {
+      throw new Error(`Project with id ${id} not found`);
+    }
+
+    this.mockProjects.splice(projectIndex, 1);
   }
 }
 

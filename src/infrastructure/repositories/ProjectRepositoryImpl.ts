@@ -1,7 +1,7 @@
 import type { ProjectRepository } from '../../domain/repositories/ProjectRepository';
 import type { Project } from '../../domain/entities/Project';
 import { apiClient } from '../api/ApiClient';
-import type { CreateProjectRequest } from '../../application/dto/ProjectDTO';
+import type { CreateProjectRequest, UpdateProjectRequest } from '../../application/dto/ProjectDTO';
 
 interface ServerProjectResponse {
   id: string;
@@ -71,6 +71,35 @@ export class ProjectRepositoryImpl implements ProjectRepository {
     } catch (error: any) {
       console.error('Failed to get project:', error);
       throw new Error(error.message || 'Failed to get project');
+    }
+  }
+
+  async updateProject(id: string, request: UpdateProjectRequest): Promise<Project> {
+    try {
+      const response = await apiClient.put<ServerProjectResponse>(`api/projects/${id}`, {
+        name: request.name,
+        description: request.description,
+      });
+      
+      return {
+        id: response.id,
+        name: response.name,
+        description: response.description || '',
+        createdAt: new Date(response.created_at),
+        updatedAt: new Date(response.updated_at),
+      };
+    } catch (error: any) {
+      console.error('Failed to update project:', error);
+      throw new Error(error.message || 'Failed to update project');
+    }
+  }
+
+  async deleteProject(id: string): Promise<void> {
+    try {
+      await apiClient.delete(`api/projects/${id}`);
+    } catch (error: any) {
+      console.error('Failed to delete project:', error);
+      throw new Error(error.message || 'Failed to delete project');
     }
   }
 }
