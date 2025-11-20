@@ -33,10 +33,10 @@ const DeployLogPage: React.FC = () => {
   }, [logs]);
 
   const loadResource = async () => {
-    if (!resourceId) return;
+    if (!resourceId || !projectId) return;
     try {
       setLoading(true);
-      const data = await resourceUseCase.getResource(resourceId);
+      const data = await resourceUseCase.getResource(resourceId, projectId);
       setResource(data.resource);
     } catch (error) {
       console.error('Failed to load resource:', error);

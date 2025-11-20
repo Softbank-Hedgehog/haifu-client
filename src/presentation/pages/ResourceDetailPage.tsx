@@ -24,10 +24,10 @@ const ResourceDetailPage: React.FC = () => {
   }, [resourceId]);
 
   const loadResource = async () => {
-    if (!resourceId) return;
+    if (!resourceId || !projectId) return;
     try {
       setLoading(true);
-      const data = await resourceUseCase.getResource(resourceId);
+      const data = await resourceUseCase.getResource(resourceId, projectId);
       setResource(data.resource);
       setDeployments(data.deployments);
     } catch (error) {
