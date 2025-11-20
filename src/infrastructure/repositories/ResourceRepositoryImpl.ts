@@ -59,7 +59,6 @@ export class ResourceRepositoryImpl implements ResourceRepository {
       const response = await apiClient.post<ServerServiceResponse>(
         `api/projects/${request.projectId}/services`,
         {
-          id: '', // 서버에서 자동 생성
           name: request.name,
           repo_owner: repository.owner,
           repo_name: repository.name,

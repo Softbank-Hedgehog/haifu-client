@@ -16,7 +16,6 @@ export class ProjectRepositoryImpl implements ProjectRepository {
   async createProject(request: CreateProjectRequest): Promise<Project> {
     try {
       const response = await apiClient.post<ServerProjectResponse>('api/projects', {
-        id: '', // 서버에서 자동 생성
         name: request.name,
         description: request.description,
       });

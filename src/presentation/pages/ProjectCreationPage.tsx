@@ -49,52 +49,54 @@ const ProjectCreationPage: React.FC = () => {
         </div>
 
         <div className="form-card">
-          <div className="form-card-header">
-            <h2>Project Details</h2>
-            <p>These details will help identify your project across the platform.</p>
+          <div style = {{ padding: '1rem' }}>
+            <div className="form-card-header">
+              <h2>Project Details</h2>
+              <p>These details will help identify your project across the platform.</p>
+            </div>
+
+            <form onSubmit={handleSubmit} className="project-form">
+              <div className="form-group">
+                <label htmlFor="project-name">Project Name</label>
+                <input
+                  id="project-name"
+                  type="text"
+                  placeholder="e.g., My Awesome App"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="project-description">Project Description (Optional)</label>
+                <textarea
+                  id="project-description"
+                  placeholder="Describe your project..."
+                  rows={3}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                />
+              </div>
+
+              <div className="form-actions">
+                <button
+                  type="button"
+                  onClick={() => navigate('/')}
+                  className="btn btn-secondary"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading || !name.trim()}
+                  className="btn btn-primary"
+                >
+                  {loading ? 'Creating...' : 'Create Project'}
+                </button>
+              </div>
+            </form>
           </div>
-
-          <form onSubmit={handleSubmit} className="project-form">
-            <div className="form-group">
-              <label htmlFor="project-name">Project Name</label>
-              <input
-                id="project-name"
-                type="text"
-                placeholder="e.g., My Awesome App"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="project-description">Project Description (Optional)</label>
-              <textarea
-                id="project-description"
-                placeholder="Describe your project..."
-                rows={3}
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-              />
-            </div>
-
-            <div className="form-actions">
-              <button
-                type="button"
-                onClick={() => navigate('/')}
-                className="btn btn-secondary"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={loading || !name.trim()}
-                className="btn btn-primary"
-              >
-                {loading ? 'Creating...' : 'Create Project'}
-              </button>
-            </div>
-          </form>
         </div>
       </div>
     </MainLayout>
