@@ -33,15 +33,27 @@ jobs:
 
       - name: Create .env.production file
         run: |
-          cat << 'EOF' > .env.production
-          VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}
-          VITE_USE_MOCK_DATA=${{ secrets.VITE_USE_MOCK_DATA }}
-          EOF
+          echo "VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}" > .env.production
+          echo "VITE_USE_MOCK_DATA=${{ secrets.VITE_USE_MOCK_DATA }}" >> .env.production
 
       - name: Build
         run: npm run build
         env:
           NODE_ENV: production
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+          VITE_USE_MOCK_DATA: ${{ secrets.VITE_USE_MOCK_DATA }}
+
+      - name: Verify build output
+        run: |
+          if [ ! -f "dist/index.html" ]; then
+            echo "Error: dist/index.html not found!"
+            exit 1
+          fi
+          if grep -q "/src/main.tsx" dist/index.html; then
+            echo "Error: dist/index.html still contains /src/main.tsx!"
+            exit 1
+          fi
+          echo "Build verification passed"
 
       - name: Create 404.html for SPA routing
         run: cp dist/index.html dist/404.html
