@@ -1100,6 +1100,9 @@ body.dark {
 
 .form-card-header {
   margin-bottom: var(--spacing-6);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-4);
 }
 
 .form-card-header h2 {
@@ -1114,6 +1117,57 @@ body.dark {
   margin: 0;
   color: var(--custom-text-secondary);
   font-size: 0.875rem;
+}
+
+.step-form-card {
+  position: relative;
+}
+
+.connections-btn {
+  margin-left: auto;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--custom-border);
+  background: var(--custom-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 5px 18px rgba(0, 0, 0, 0.25);
+}
+
+.connections-btn .material-symbols-outlined {
+  color: var(--color-primary);
+  font-size: 1.2rem;
+}
+
+.connections-btn:hover {
+  transform: translateY(-1px) scale(1.05);
+  background: rgba(80, 72, 229, 0.15);
+  box-shadow: 0 15px 25px rgba(15, 23, 42, 0.35);
+}
+
+.connections-btn::after {
+  content: '';
+  position: absolute;
+  width: 60%;
+  height: 60%;
+  border-radius: 50%;
+  border: 1px solid rgba(80, 72, 229, 0.3);
+  animation: dm-pulse 1.4s infinite;
+}
+
+@keyframes dm-pulse {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1.2);
+    opacity: 0;
+  }
 }
 
 .project-form {
@@ -1585,6 +1639,85 @@ body.dark {
   cursor: pointer;
   transition: all 0.2s;
   border: none;
+}
+
+.dockerfile-section {
+  margin-top: var(--spacing-4);
+}
+
+.dockerfile-card {
+  background-color: var(--custom-surface);
+  border: 1px solid var(--custom-border);
+  padding: var(--spacing-4);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+}
+
+.dockerfile-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dockerfile-header h3 {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--text-slate-50);
+}
+
+.dockerfile-status {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.2rem 0.7rem;
+  border-radius: var(--radius-full);
+  background-color: rgba(255, 255, 255, 0.1);
+  color: var(--text-slate-50);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.dockerfile-status.present {
+  border: 1px solid rgba(52, 211, 153, 0.7);
+}
+
+.dockerfile-status.missing {
+  border: 1px solid rgba(239, 68, 68, 0.7);
+}
+
+.dockerfile-description {
+  margin: 0;
+  color: var(--text-slate-200);
+  font-size: 0.85rem;
+}
+
+.view-dockerfile-btn {
+  align-self: flex-start;
+  padding: 0.35rem 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--custom-border);
+  background-color: transparent;
+  color: var(--text-slate-50);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.view-dockerfile-btn:hover {
+  background-color: rgba(80, 72, 229, 0.15);
+  color: var(--color-primary);
+}
+
+.dockerfile-preview {
+  background-color: rgba(15, 23, 42, 0.7);
+  color: #cbd5f5;
+  border-radius: var(--radius-md);
+  padding: var(--spacing-3);
+  overflow-x: auto;
+  font-size: 0.75rem;
+  line-height: 1.4;
 }
 
 .btn-primary {

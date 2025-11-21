@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 interface BuildConfig {
   runtime: string;
@@ -16,6 +16,8 @@ const Step2BuildConfiguration: React.FC<Step2BuildConfigurationProps> = ({
   buildConfig,
   onBuildConfigChange,
 }) => {
+  const [showDockerInfo, setShowDockerInfo] = useState(false);
+  const dockerDetected = true; // placeholder until backend is wired
   const runtimeOptions = [
     { value: 'nodejs18', label: 'Node.js 18' },
     { value: 'nodejs20', label: 'Node.js 20' },
@@ -39,6 +41,9 @@ const Step2BuildConfiguration: React.FC<Step2BuildConfigurationProps> = ({
         <div className="form-card-header">
           <h2>Build Configuration</h2>
           <p>Configure how your application will be built and started.</p>
+          <button type="button" className="connections-btn">
+            <span className="material-symbols-outlined">send</span>
+          </button>
         </div>
 
             <div className="form-group">
@@ -100,6 +105,35 @@ const Step2BuildConfiguration: React.FC<Step2BuildConfigurationProps> = ({
                 required
               />
               <p className="form-hint">The TCP port your service uses.</p>
+            </div>
+            <div className="dockerfile-section">
+              <div className="dockerfile-card">
+                <div className="dockerfile-header">
+                  <h3>Dockerfile</h3>
+                  <span className={`dockerfile-status ${dockerDetected ? 'present' : 'missing'}`}>
+                    {dockerDetected ? 'Detected' : 'Not found'}
+                  </span>
+                </div>
+                <p className="dockerfile-description">
+                  hAIfu scans your repo and matches a Dockerfile so deployments can reuse the same build context.
+                </p>
+                <button
+                  type="button"
+                  className="view-dockerfile-btn"
+                  onClick={() => setShowDockerInfo((prev) => !prev)}
+                >
+                  {showDockerInfo ? 'Hide Dockerfile' : 'View Dockerfile'}
+                </button>
+                {showDockerInfo && (
+                  <pre className="dockerfile-preview">
+FROM node:18
+WORKDIR /app
+COPY . .
+RUN npm install
+CMD ["npm", "start"]
+                  </pre>
+                )}
+              </div>
             </div>
       </div>
     </div>
