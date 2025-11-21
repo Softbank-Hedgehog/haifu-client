@@ -233,6 +233,7 @@ const AIChatPage: React.FC = () => {
           </div>
 
           {/* 추천 코드 스니펫 */}
+          {/* todo: database의 resource의 정보를 가져오기*/}
           <div className="code-snippets">
             <h4>Recommended Code Snippets</h4>
             <div className="snippets-list">

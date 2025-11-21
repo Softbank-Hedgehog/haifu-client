@@ -212,6 +212,7 @@ const ResourceDetailPage: React.FC = () => {
         )}
 
         {/* GitHub Repo Tab */}
+        {/* todo : github Repository 연동 내용 보여주기.*/}
         {activeTab === 'repo' && (
           <div className="repo-section">
             <div className="repo-card">
