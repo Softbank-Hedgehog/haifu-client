@@ -174,6 +174,120 @@ body.dark {
   background-color: var(--bg-slate-200);
 }
 
+.login-ai-wrapper {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.75rem;
+}
+
+.login-ai-bubble {
+  width: 19rem;
+  max-width: min(280px, 90vw);
+  border-radius: 16px;
+  background: rgba(15, 23, 42, 0.95);
+  color: var(--text-slate-50);
+  box-shadow: 0 25px 65px rgba(2, 6, 23, 0.45);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.login-ai-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.login-ai-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.login-ai-message {
+  padding: 0.6rem 0.9rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+}
+
+.login-ai-message-user {
+  align-self: flex-end;
+  background: var(--custom-text-secondary);
+  border-bottom-right-radius: 4px;
+  color: var(--text-slate-900);
+  border: 1px solid var(--custom-border);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.login-ai-message-agent {
+  align-self: flex-start;
+  background: #15213a;
+  border-bottom-left-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.login-ai-input-wrapper {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.login-ai-input {
+  flex: 1;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(15, 23, 42, 0.9);
+  color: var(--text-slate-50);
+  padding: 0.4rem 0.9rem;
+  font-size: 0.75rem;
+}
+
+.login-ai-send {
+  border-radius: 999px;
+  border: none;
+  background: var(--custom-text-secondary);
+  color: #042127;
+  padding: 0.35rem 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 0.7rem;
+}
+
+.login-ai-button {
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 999px;
+  border: none;
+  background-color: var(--custom-accent);
+  color: var(--text-slate-100);
+  box-shadow: var(--shadow-lg);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
+}
+
+.login-ai-button-open {
+  transform: scale(1.03);
+}
+
+.login-ai-button-icon {
+  font-size: 1.5rem;
+}
+
 .user-menu {
   display: flex;
   align-items: center;
