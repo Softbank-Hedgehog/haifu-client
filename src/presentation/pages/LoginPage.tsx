@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useDependencies } from '../context/DependencyContext';
 import { AuthUseCase } from '../../application/useCases/AuthUseCase';
+import LoginAIAgent from '../components/LoginAIAgent';
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
@@ -12,6 +13,7 @@ const LoginPage: React.FC = () => {
   const authUseCase = new AuthUseCase(authRepository);
   
   const [loading, setLoading] = useState(false);
+  const [aiAgentLoading, setAiAgentLoading] = useState(false);
   const code = searchParams.get('code');
   const error = searchParams.get('error');
 
@@ -111,6 +113,7 @@ const LoginPage: React.FC = () => {
         </div>
         <a className="login-help-link" href="#" style={{ color: 'rgba(156, 163, 175, 1)' }}>Need Help?</a>
       </div>
+      <LoginAIAgent />
     </div>
   );
 };

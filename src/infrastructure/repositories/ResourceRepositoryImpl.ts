@@ -67,7 +67,7 @@ export class ResourceRepositoryImpl implements ResourceRepository {
           cpu: cpuString,
           memory: memoryString,
           port: serverSpec?.port || 8080,
-          build_command: config.buildMode === 'manual' ? config.buildCommand : null,
+        build_command: config.buildCommand || null,
           start_command: config.startCommand || null,
           environment_variables: config.environmentVariables || null,
         }
@@ -179,8 +179,8 @@ export class ResourceRepositoryImpl implements ResourceRepository {
           const language = config.techStack.language.toLowerCase();
           updatePayload.runtime = runtimeMap[language] || 'NODEJS_18';
         }
-        if ('buildMode' in config) {
-          updatePayload.build_command = config.buildMode === 'manual' ? config.buildCommand : null;
+        if (config.buildCommand) {
+          updatePayload.build_command = config.buildCommand;
         }
         if (config.startCommand) {
           updatePayload.start_command = config.startCommand;
