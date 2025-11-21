@@ -32,7 +32,6 @@ const ServiceDeploymentFlow: React.FC = () => {
 
   // Step 2: Build Configuration
   const [buildConfig, setBuildConfig] = useState({
-    buildMode: 'auto' as 'auto' | 'manual',
     runtime: 'nodejs18',
     buildCommand: '',
     startCommand: '',
@@ -83,7 +82,6 @@ const ServiceDeploymentFlow: React.FC = () => {
           cpu: serviceConfig.cpu,
           memory: serviceConfig.memory,
         },
-        buildMode: buildConfig.buildMode,
         environmentVariables: serviceConfig.environmentVariables.reduce(
           (acc, env) => {
             if (env.name && env.value) {

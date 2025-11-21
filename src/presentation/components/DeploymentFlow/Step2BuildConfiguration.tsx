@@ -1,7 +1,6 @@
 import React from 'react';
 
 interface BuildConfig {
-  buildMode: 'auto' | 'manual';
   runtime: string;
   buildCommand: string;
   startCommand: string;
@@ -42,40 +41,6 @@ const Step2BuildConfiguration: React.FC<Step2BuildConfigurationProps> = ({
           <p>Configure how your application will be built and started.</p>
         </div>
 
-        <div className="form-group">
-          <label>Build Settings</label>
-          <div className="radio-group">
-            <label className="radio-option">
-              <input
-                type="radio"
-                name="build-mode"
-                value="auto"
-                checked={buildConfig.buildMode === 'auto'}
-                onChange={(e) => handleChange('buildMode', e.target.value)}
-              />
-              <div>
-                <strong>Automatic Build</strong>
-                <p>Agent will automatically detect and configure build settings based on your repository.</p>
-              </div>
-            </label>
-            <label className="radio-option">
-              <input
-                type="radio"
-                name="build-mode"
-                value="manual"
-                checked={buildConfig.buildMode === 'manual'}
-                onChange={(e) => handleChange('buildMode', e.target.value)}
-              />
-              <div>
-                <strong>Manual Build</strong>
-                <p>Configure all build settings manually.</p>
-              </div>
-            </label>
-          </div>
-        </div>
-
-        {buildConfig.buildMode === 'manual' && (
-          <>
             <div className="form-group">
               <label htmlFor="runtime">Runtime</label>
               <select
@@ -136,18 +101,6 @@ const Step2BuildConfiguration: React.FC<Step2BuildConfigurationProps> = ({
               />
               <p className="form-hint">The TCP port your service uses.</p>
             </div>
-          </>
-        )}
-
-        {buildConfig.buildMode === 'auto' && (
-          <div className="info-box">
-            <span className="material-symbols-outlined">auto_awesome</span>
-            <div>
-              <strong>AI-Powered Detection</strong>
-              <p>Our agent will automatically analyze your repository and configure optimal build settings based on the detected tech stack.</p>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
