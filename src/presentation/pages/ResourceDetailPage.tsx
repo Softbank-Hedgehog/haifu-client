@@ -14,10 +14,10 @@ const ResourceDetailPage: React.FC = () => {
   
   const [resource, setResource] = useState<Resource | null>(null);
   const [deployments, setDeployments] = useState<Deployment[]>([]);
-  const [activeTab, setActiveTab] = useState<'overview' | 'deployments' | 'repo' | 'logs' | 'ai'>('overview');
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [activeTab, setActiveTab] = useState<'overview' | 'deployments' | 'repo' | 'logs' | 'ai'>('overview');
 
   useEffect(() => {
     if (resourceId) {
@@ -136,7 +136,7 @@ const ResourceDetailPage: React.FC = () => {
             }}
           >
             <span className="material-symbols-outlined">description</span>
-            Logs
+            Pipeline
           </button>
           <button
             className={`tab-btn ${activeTab === 'ai' ? 'active' : ''}`}
@@ -252,7 +252,6 @@ const ResourceDetailPage: React.FC = () => {
         )}
 
         {/* GitHub Repo Tab */}
-        {/* todo : github Repository 연동 내용 보여주기.*/}
         {activeTab === 'repo' && (
           <div className="repo-section">
             <div className="repo-card">
