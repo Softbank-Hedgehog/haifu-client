@@ -35,15 +35,13 @@ export class ProjectRepositoryImpl implements ProjectRepository {
 
   async listProjects(): Promise<Project[]> {
     try {
-      interface ListProjectsData {
-        items: ServerProjectResponse[];
-        page: number;
-        per_page: number;
-        total: number;
-      }
-      const response = await apiClient.get<ListProjectsData>('api/projects');
+      // ApiClient가 이미 응답의 data 필드를 반환하므로, response는 바로 배열입니다
+      const response = await apiClient.get<ServerProjectResponse[]>('api/projects');
       
-      return response.items.map((p) => ({
+      // response가 배열인지 확인 (배열이 아닐 수도 있으므로 안전하게 처리)
+      const projects = Array.isArray(response) ? response : [];
+      
+      return projects.map((p) => ({
         id: p.id,
         name: p.name,
         description: p.description || '',
