@@ -1824,7 +1824,7 @@ body.dark {
 }
 
 .btn-danger {
-  background-color: #ef4444;
+  background-color: #160000;
   color: white;
   border: none;
   font-weight: 700;
@@ -1835,7 +1835,7 @@ body.dark {
 }
 
 .btn-danger:hover:not(:disabled) {
-  background-color: #dc2626;
+  background-color: #390000;
 }
 
 .btn-danger:disabled {

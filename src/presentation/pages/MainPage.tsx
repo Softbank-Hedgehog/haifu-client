@@ -173,7 +173,7 @@ const MainPage: React.FC = () => {
                   </div>
                   <div 
                     className="project-card-actions"
-                    ref={(el) => (menuRefs.current[project.id] = el)}
+                    ref={(el) => { menuRefs.current[project.id] = el; }}
                   >
                     <button
                       className="project-menu-toggle"
