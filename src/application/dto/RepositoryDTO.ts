@@ -23,6 +23,27 @@ export interface ListRepositoriesResponse {
   total: number;
 }
 
+// S3에 저장할 Repository 요청
+export interface SaveRepositoryToS3Request {
+  id: number;
+  name: string;
+  full_name: string;
+  description: string | null;
+  html_url: string;
+  clone_url: string;
+  default_branch: string;
+  language: string | null;
+  private: boolean;
+  updated_at: string;
+  branch?: string;
+  sourceDirectory?: string;
+}
+
+// S3 저장 응답 (ApiClient가 data 필드를 추출하므로)
+export interface SaveRepositoryToS3Response {
+  url: string;
+}
+
 
 
 

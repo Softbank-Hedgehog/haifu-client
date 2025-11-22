@@ -5,6 +5,8 @@ import type {
   ListRepositoriesRequest,
   ListRepositoriesResponse,
   RepositoryDTO,
+  SaveRepositoryToS3Request,
+  SaveRepositoryToS3Response,
 } from '../../application/dto/RepositoryDTO';
 
 export class RepositoryRepositoryImpl implements RepositoryRepository {
@@ -45,6 +47,20 @@ export class RepositoryRepositoryImpl implements RepositoryRepository {
     } catch (error: any) {
       console.error('Failed to list repositories:', error);
       throw new Error(error.message || 'Failed to list repositories');
+    }
+  }
+
+  async saveRepositoryToS3(owner: string, projectId: string, request: SaveRepositoryToS3Request): Promise<SaveRepositoryToS3Response> {
+    try {
+      const url = `api/github/${owner}/${projectId}`;
+      
+      // ApiClient가 이미 응답의 data 필드를 추출하므로, response는 { url: string } 형식입니다
+      const response = await apiClient.post<SaveRepositoryToS3Response>(url, request);
+      
+      return response;
+    } catch (error: any) {
+      console.error('Failed to save repository to S3:', error);
+      throw new Error(error.message || 'Failed to save repository to S3');
     }
   }
 }
