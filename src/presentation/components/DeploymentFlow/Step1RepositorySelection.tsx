@@ -2,19 +2,23 @@ import React, { useState, useEffect } from 'react';
 import { useDependencies } from '../../context/DependencyContext';
 import { RepositoryUseCase } from '../../../application/useCases/RepositoryUseCase';
 import type { GitHubRepository } from '../../../domain/valueObjects/GitHubRepository';
+import type { Repository } from '../../../domain/entities/Repository';
 
 interface Step1RepositorySelectionProps {
   repository: GitHubRepository;
   onRepositoryChange: (repository: GitHubRepository) => void;
+  onRepositorySelect: (repository: Repository) => void;
 }
 
 const Step1RepositorySelection: React.FC<Step1RepositorySelectionProps> = ({
   repository,
   onRepositoryChange,
+  onRepositorySelect,
 }) => {
   const { repositoryRepository } = useDependencies();
   const repositoryUseCase = new RepositoryUseCase(repositoryRepository);
   
+  const [allRepositories, setAllRepositories] = useState<Repository[]>([]);
   const [repositories, setRepositories] = useState<Array<{ owner: string; name: string; fullName: string }>>([]);
   const [branches, setBranches] = useState<string[]>([]);
   const [selectedRepo, setSelectedRepo] = useState<string>('');
@@ -33,6 +37,9 @@ const Step1RepositorySelection: React.FC<Step1RepositorySelectionProps> = ({
         page: 1,
         per_page: 30,
       });
+
+      // 전체 Repository 엔티티 저장
+      setAllRepositories(response.repositories);
 
       const repoList = response.repositories.map((repo) => {
         const [owner, name] = repo.fullName.split('/');
@@ -63,6 +70,13 @@ const Step1RepositorySelection: React.FC<Step1RepositorySelectionProps> = ({
   const handleRepoSelect = (fullName: string) => {
     const [owner, name] = fullName.split('/');
     setSelectedRepo(fullName);
+    
+    // 선택된 Repository 엔티티 찾기
+    const selectedRepoEntity = allRepositories.find((repo) => repo.fullName === fullName);
+    if (selectedRepoEntity) {
+      onRepositorySelect(selectedRepoEntity);
+    }
+    
     onRepositoryChange({
       ...repository,
       owner,

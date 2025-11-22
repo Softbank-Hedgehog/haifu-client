@@ -10,14 +10,27 @@ interface BuildConfig {
 interface Step2BuildConfigurationProps {
   buildConfig: BuildConfig;
   onBuildConfigChange: (config: BuildConfig) => void;
+  s3Url?: string | null;
 }
 
 const Step2BuildConfiguration: React.FC<Step2BuildConfigurationProps> = ({
   buildConfig,
   onBuildConfigChange,
+  s3Url,
 }) => {
   const [showDockerInfo, setShowDockerInfo] = useState(false);
   const dockerDetected = true; // placeholder until backend is wired
+
+  const handleSendClick = () => {
+    // TODO: 화살표 버튼 클릭 시 S3 URL을 사용하는 API 호출
+    // s3Url을 사용하여 추가 API 호출
+    console.log('S3 URL:', s3Url);
+    if (!s3Url) {
+      alert('Repository has not been saved to S3 yet. Please go back and complete Step 1.');
+      return;
+    }
+    // TODO: s3Url을 사용하여 실제 API 호출
+  };
   const runtimeOptions = [
     { value: 'nodejs18', label: 'Node.js 18' },
     { value: 'nodejs20', label: 'Node.js 20' },
@@ -41,7 +54,13 @@ const Step2BuildConfiguration: React.FC<Step2BuildConfigurationProps> = ({
         <div className="form-card-header">
           <h2>Build Configuration</h2>
           <p>Configure how your application will be built and started.</p>
-          <button type="button" className="connections-btn">
+          <button 
+            type="button" 
+            className="connections-btn"
+            onClick={handleSendClick}
+            disabled={!s3Url}
+            title={!s3Url ? 'Complete Step 1 first' : 'Send to backend'}
+          >
             <span className="material-symbols-outlined">send</span>
           </button>
         </div>

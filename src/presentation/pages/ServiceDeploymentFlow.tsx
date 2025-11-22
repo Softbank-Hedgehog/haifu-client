@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useDependencies } from '../context/DependencyContext';
 import { ResourceUseCase } from '../../application/useCases/ResourceUseCase';
+import { RepositoryUseCase } from '../../application/useCases/RepositoryUseCase';
 import type { ServiceDeploymentConfig } from '../../application/dto/ResourceDTO';
 import type { ServerSpec } from '../../domain/valueObjects/ServerSpec';
 import type { GitHubRepository } from '../../domain/valueObjects/GitHubRepository';
+import type { Repository } from '../../domain/entities/Repository';
 import MainLayout from '../components/Layout/MainLayout';
 import Step1RepositorySelection from '../components/DeploymentFlow/Step1RepositorySelection';
 import Step2BuildConfiguration from '../components/DeploymentFlow/Step2BuildConfiguration';
@@ -15,12 +17,15 @@ const ServiceDeploymentFlow: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { resourceRepository } = useDependencies();
+  const { resourceRepository, repositoryRepository } = useDependencies();
   const resourceUseCase = new ResourceUseCase(resourceRepository);
+  const repositoryUseCase = new RepositoryUseCase(repositoryRepository);
   
   const resourceType = (searchParams.get('type') || 'service') as 'service' | 'database';
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [s3Url, setS3Url] = useState<string | null>(null);
+  const [selectedRepository, setSelectedRepository] = useState<Repository | null>(null);
 
   // Step 1: Repository Selection
   const [repository, setRepository] = useState<GitHubRepository>({
@@ -46,9 +51,56 @@ const ServiceDeploymentFlow: React.FC = () => {
     environmentVariables: [] as Array<{ name: string; value: string }>,
   });
 
-  const handleNext = () => {
-    if (currentStep < 4) {
-      setCurrentStep(currentStep + 1);
+  const handleNext = async () => {
+    // Step 1에서 Next 클릭 시 repository를 S3에 저장
+    if (currentStep === 1) {
+      if (!projectId || !repository.owner || !repository.name || !selectedRepository) {
+        alert('Please select a repository first');
+        return;
+      }
+
+      try {
+        setLoading(true);
+        
+        // Repository를 S3에 저장
+        // clone_url 생성: html_url에서 .git 확장자를 추가하거나 변경
+        const cloneUrl = selectedRepository.htmlUrl.endsWith('.git')
+          ? selectedRepository.htmlUrl
+          : `${selectedRepository.htmlUrl}.git`;
+
+        const response = await repositoryUseCase.saveRepositoryToS3(
+          repository.owner,
+          projectId,
+          {
+            id: selectedRepository.id,
+            name: selectedRepository.name,
+            full_name: selectedRepository.fullName,
+            description: selectedRepository.description,
+            html_url: selectedRepository.htmlUrl,
+            clone_url: cloneUrl,
+            default_branch: repository.branch || 'main',
+            language: selectedRepository.language || null,
+            private: selectedRepository.private,
+            updated_at: selectedRepository.updatedAt.toISOString(),
+            branch: repository.branch || 'main',
+            sourceDirectory: repository.path || '/',
+          }
+        );
+
+        // S3 URL 저장
+        setS3Url(response.url);
+        setCurrentStep(currentStep + 1);
+      } catch (error: any) {
+        console.error('Failed to save repository to S3:', error);
+        alert(error.message || 'Failed to save repository to S3. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      // 다른 단계에서는 바로 다음 단계로 이동
+      if (currentStep < 4) {
+        setCurrentStep(currentStep + 1);
+      }
     }
   };
 
@@ -165,12 +217,14 @@ const ServiceDeploymentFlow: React.FC = () => {
             <Step1RepositorySelection
               repository={repository}
               onRepositoryChange={setRepository}
+              onRepositorySelect={setSelectedRepository}
             />
           )}
           {currentStep === 2 && (
             <Step2BuildConfiguration
               buildConfig={buildConfig}
               onBuildConfigChange={setBuildConfig}
+              s3Url={s3Url}
             />
           )}
           {currentStep === 3 && (
