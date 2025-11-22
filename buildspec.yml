@@ -1,21 +1,27 @@
 version: 0.2
+
 phases:
   install:
     runtime-versions:
-      nodejs: 20
+      nodejs: 22
     commands:
       - echo Installing dependencies...
-      - npm install
+      - echo "VITE_API_BASE_URL=$VITE_API_BASE_URL" > .env.production
+      - echo "VITE_USE_MOCK_DATA=$VITE_USE_MOCK_DATA" >> .env.production
+      - npm ci
+
   build:
     commands:
       - echo Building React app...
       - npm run build
+
   post_build:
     commands:
       - echo Deploying to S3...
       - aws s3 sync dist/ s3://$S3_BUCKET --delete
       - echo Creating CloudFront invalidation...
       - aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_DISTRIBUTION_ID --paths "/*"
+
 artifacts:
   files:
     - '**/*'
