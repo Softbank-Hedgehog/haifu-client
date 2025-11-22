@@ -23,7 +23,9 @@ const Step1RepositorySelection: React.FC<Step1RepositorySelectionProps> = ({
   const [branches, setBranches] = useState<string[]>([]);
   const [selectedRepo, setSelectedRepo] = useState<string>('');
   const [loading, setLoading] = useState(false);
+  const [loadingBranches, setLoadingBranches] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [branchesError, setBranchesError] = useState<string | null>(null);
 
   useEffect(() => {
     loadRepositories();
@@ -62,10 +64,36 @@ const Step1RepositorySelection: React.FC<Step1RepositorySelectionProps> = ({
   useEffect(() => {
     if (repository.owner && repository.name) {
       setSelectedRepo(`${repository.owner}/${repository.name}`);
-      // TODO: GitHub API로 브랜치 목록 가져오기
-      setBranches(['main', 'dev', 'develop', 'master']);
+      // 실제 API로 브랜치 목록 가져오기
+      loadBranches(repository.owner, repository.name);
+    } else {
+      setBranches([]);
+      setBranchesError(null);
     }
-  }, [repository]);
+  }, [repository.owner, repository.name]);
+
+  const loadBranches = async (owner: string, repo: string) => {
+    try {
+      setLoadingBranches(true);
+      setBranchesError(null);
+      const branchList = await repositoryUseCase.listBranches(owner, repo);
+      setBranches(branchList);
+      
+      // 브랜치가 있고 현재 선택된 브랜치가 목록에 없으면 첫 번째 브랜치로 설정
+      if (branchList.length > 0 && !branchList.includes(repository.branch)) {
+        onRepositoryChange({
+          ...repository,
+          branch: branchList[0],
+        });
+      }
+    } catch (err: any) {
+      console.error('Failed to load branches:', err);
+      setBranchesError(err?.message || 'Failed to load branches. Please try again.');
+      setBranches([]);
+    } finally {
+      setLoadingBranches(false);
+    }
+  };
 
   const handleRepoSelect = (fullName: string) => {
     const [owner, name] = fullName.split('/');
@@ -77,19 +105,21 @@ const Step1RepositorySelection: React.FC<Step1RepositorySelectionProps> = ({
       onRepositorySelect(selectedRepoEntity);
     }
     
-    onRepositoryChange({
-      ...repository,
-      owner,
-      name,
-    });
-    // TODO: 브랜치 목록 다시 가져오기
-    setBranches(['main', 'dev', 'develop', 'master']);
+    // Repository 변경 시 브랜치 목록 초기화 및 다시 가져오기
+    setBranches([]);
+    setBranchesError(null);
+    
     onRepositoryChange({
       owner,
       name,
-      branch: 'main',
+      branch: '', // 브랜치 목록을 가져올 때까지 초기화
       path: repository.path || '/',
     });
+    
+    // 브랜치 목록 가져오기
+    if (owner && name) {
+      loadBranches(owner, name);
+    }
   };
 
   const handleBranchChange = (branch: string) => {
@@ -148,19 +178,35 @@ const Step1RepositorySelection: React.FC<Step1RepositorySelectionProps> = ({
           <>
             <div className="form-group">
               <label htmlFor="branch">Branch</label>
-              <select
-                id="branch"
-                value={repository.branch}
-                onChange={(e) => handleBranchChange(e.target.value)}
-                required
-              >
-                <option value="">Select a branch</option>
-                {branches.map((branch) => (
-                  <option key={branch} value={branch}>
-                    {branch}
-                  </option>
-                ))}
-              </select>
+              {loadingBranches ? (
+                <div className="form-loading">Loading branches...</div>
+              ) : branchesError ? (
+                <div className="form-error">
+                  <p>{branchesError}</p>
+                  <button 
+                    type="button" 
+                    onClick={() => loadBranches(repository.owner, repository.name)} 
+                    className="btn btn-secondary btn-sm"
+                  >
+                    Retry
+                  </button>
+                </div>
+              ) : (
+                <select
+                  id="branch"
+                  value={repository.branch}
+                  onChange={(e) => handleBranchChange(e.target.value)}
+                  required
+                  disabled={loadingBranches || branches.length === 0}
+                >
+                  <option value="">Select a branch</option>
+                  {branches.map((branch) => (
+                    <option key={branch} value={branch}>
+                      {branch}
+                    </option>
+                  ))}
+                </select>
+              )}
               <p className="form-hint">Select the branch to deploy from.</p>
             </div>
 
