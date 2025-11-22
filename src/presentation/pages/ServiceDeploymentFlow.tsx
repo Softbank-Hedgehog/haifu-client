@@ -66,6 +66,7 @@ const ServiceDeploymentFlow: React.FC = () => {
         // Step 1 시점에는 service_id가 아직 없으므로 빈 문자열로 전송
         const response = await repositoryUseCase.saveRepositoryToS3({
           project_id: projectId || '',
+          service_id: '', // 서비스 생성 전이므로 빈 문자열
           owner: repository.owner,
           repo: repository.name,
           branch: repository.branch || 'main',

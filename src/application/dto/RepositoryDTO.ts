@@ -26,7 +26,7 @@ export interface ListRepositoriesResponse {
 // S3에 저장할 Repository 요청
 export interface SaveRepositoryToS3Request {
   project_id: string;
-  service_id?: string;
+  service_id: string; // 백엔드에서 필수로 받음 (서비스 생성 전에는 빈 문자열)
   owner: string;
   repo: string;
   branch: string;
