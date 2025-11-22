@@ -62,11 +62,32 @@ const ServiceDeploymentFlow: React.FC = () => {
       try {
         setLoading(true);
         
-        // Repository를 S3에 저장
-        // Step 1 시점에는 service_id가 아직 없으므로 빈 문자열로 전송
+        const generateRandomLong = (): number => {
+          const array = new Uint8Array(8);
+          crypto.getRandomValues(array);
+          
+          let longValue = BigInt(0);
+          for (let i = 0; i < 8; i++) {
+            longValue = (longValue << BigInt(8)) | BigInt(array[i]);
+          }
+          
+          // 양수로 만들기 (부호 비트 제거)
+          longValue = longValue & BigInt('0x7FFFFFFFFFFFFFFF');
+          
+          const MAX_SAFE_INTEGER = BigInt(Number.MAX_SAFE_INTEGER);
+          if (longValue > MAX_SAFE_INTEGER) {
+            longValue = longValue % MAX_SAFE_INTEGER;
+          }
+          
+          return Number(longValue);
+        };
+        
+        const tmpId = generateRandomLong();
+        console.log('[ServiceDeploymentFlow] Generated tmp_id (Long):', tmpId);
+        
         const response = await repositoryUseCase.saveRepositoryToS3({
           project_id: projectId || '',
-          service_id: '', // 서비스 생성 전이므로 빈 문자열
+          tmp_id: tmpId,
           owner: repository.owner,
           repo: repository.name,
           branch: repository.branch || 'main',
