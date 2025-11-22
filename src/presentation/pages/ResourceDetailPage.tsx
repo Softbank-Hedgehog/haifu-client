@@ -16,6 +16,8 @@ const ResourceDetailPage: React.FC = () => {
   const [deployments, setDeployments] = useState<Deployment[]>([]);
   const [activeTab, setActiveTab] = useState<'overview' | 'deployments' | 'repo' | 'logs' | 'ai'>('overview');
   const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
     if (resourceId) {
@@ -37,6 +39,32 @@ const ResourceDetailPage: React.FC = () => {
     }
   };
 
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowDeleteConfirm(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!resourceId || !projectId) return;
+
+    try {
+      setDeleting(true);
+      await resourceUseCase.deleteResource(resourceId, projectId);
+      // 삭제 성공 시 프로젝트 페이지로 이동
+      navigate(`/projects/${projectId}`);
+    } catch (error: any) {
+      console.error('Failed to delete service:', error);
+      alert(error.message || 'Failed to delete service. Please try again.');
+      setShowDeleteConfirm(false);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setShowDeleteConfirm(false);
+  };
+
   if (loading || !resource) {
     return (
       <MainLayout>
@@ -55,13 +83,25 @@ const ResourceDetailPage: React.FC = () => {
             <span className="material-symbols-outlined">arrow_back</span>
           </button>
           <div className="page-title-section">
-            <div className="service-header-info">
-              <h1>{resource.name}</h1>
-              <span className={`status-badge status-${resource.status}`}>
-                {resource.status}
-              </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <div>
+                <div className="service-header-info">
+                  <h1>{resource.name}</h1>
+                  <span className={`status-badge status-${resource.status}`}>
+                    {resource.status}
+                  </span>
+                </div>
+                <p className="page-subtitle">Service deployment details and monitoring</p>
+              </div>
+              <button
+                onClick={handleDeleteClick}
+                className="btn btn-danger btn-icon"
+                title="Delete service"
+                disabled={deleting}
+              >
+                <span className="material-symbols-outlined">delete</span>
+              </button>
             </div>
-            <p className="page-subtitle">Service deployment details and monitoring</p>
           </div>
         </div>
 
@@ -220,6 +260,59 @@ const ResourceDetailPage: React.FC = () => {
               <div className="repo-info">
                 <p>GitHub repository information will be displayed here.</p>
                 {/* TODO: GitHub Repo 정보 표시 */}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 삭제 확인 다이얼로그 */}
+        {showDeleteConfirm && (
+          <div className="modal-overlay" onClick={handleDeleteCancel}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <h2>Delete Service</h2>
+                <button
+                  onClick={handleDeleteCancel}
+                  className="modal-close-btn"
+                  disabled={deleting}
+                >
+                  <span className="material-symbols-outlined">close</span>
+                </button>
+              </div>
+              <div className="modal-body">
+                <p>Are you sure you want to delete this service?</p>
+                <p style={{ color: 'var(--text-slate-400)', fontSize: '0.875rem', marginTop: '0.5rem' }}>
+                  <strong>Warning:</strong> This action cannot be undone. All deployments and configurations will be permanently deleted.
+                </p>
+                <p style={{ fontWeight: 'bold', marginTop: '1rem' }}>
+                  Service: {resource.name}
+                </p>
+              </div>
+              <div className="modal-footer">
+                <button
+                  onClick={handleDeleteCancel}
+                  className="btn btn-secondary"
+                  disabled={deleting}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeleteConfirm}
+                  className="btn btn-danger"
+                  disabled={deleting}
+                >
+                  {deleting ? (
+                    <>
+                      <span className="material-symbols-outlined spin" style={{ marginRight: '0.5rem' }}>sync</span>
+                      Deleting...
+                    </>
+                  ) : (
+                    <>
+                      <span className="material-symbols-outlined" style={{ marginRight: '0.5rem' }}>delete</span>
+                      Delete Service
+                    </>
+                  )}
+                </button>
               </div>
             </div>
           </div>

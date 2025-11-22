@@ -17,6 +17,8 @@ const ProjectDetailPage: React.FC = () => {
   const [project, setProject] = useState<Project | null>(null);
   const [services, setServices] = useState<Resource[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [showResourceTypeMenu, setShowResourceTypeMenu] = useState(false);
@@ -61,6 +63,32 @@ const ProjectDetailPage: React.FC = () => {
     navigate(`/projects/${projectId}/resources/${resourceId}`);
   };
 
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowDeleteConfirm(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!projectId) return;
+
+    try {
+      setDeleting(true);
+      await projectUseCase.deleteProject(projectId);
+      // 삭제 성공 시 메인 페이지로 이동
+      navigate('/');
+    } catch (error: any) {
+      console.error('Failed to delete project:', error);
+      alert(error.message || 'Failed to delete project. Please try again.');
+      setShowDeleteConfirm(false);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setShowDeleteConfirm(false);
+  };
+
   // 필터링
   const filteredServices = services.filter((service) => {
     const matchesSearch = service.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -81,8 +109,20 @@ const ProjectDetailPage: React.FC = () => {
       <div className="project-detail-page">
         <div className="page-header">
           <div className="page-title-section">
-            <h1>{project.name}</h1>
-            <p className="page-subtitle">{project.description || 'Manage your services and deployments'}</p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <div>
+                <h1>{project.name}</h1>
+                <p className="page-subtitle">{project.description || 'Manage your services and deployments'}</p>
+              </div>
+              <button
+                onClick={handleDeleteClick}
+                className="btn btn-danger btn-icon"
+                title="Delete project"
+                disabled={deleting}
+              >
+                <span className="material-symbols-outlined">delete</span>
+              </button>
+            </div>
           </div>
           <div className="resource-type-toggle">
             <button 
@@ -119,6 +159,59 @@ const ProjectDetailPage: React.FC = () => {
             )}
           </div>
         </div>
+
+        {/* 삭제 확인 다이얼로그 */}
+        {showDeleteConfirm && (
+          <div className="modal-overlay" onClick={handleDeleteCancel}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <h2>Delete Project</h2>
+                <button
+                  onClick={handleDeleteCancel}
+                  className="modal-close-btn"
+                  disabled={deleting}
+                >
+                  <span className="material-symbols-outlined">close</span>
+                </button>
+              </div>
+              <div className="modal-body">
+                <p>Are you sure you want to delete this project?</p>
+                <p style={{ color: 'var(--text-slate-400)', fontSize: '0.875rem', marginTop: '0.5rem' }}>
+                  <strong>Warning:</strong> This action cannot be undone. All services and deployments under this project will also be deleted.
+                </p>
+                <p style={{ fontWeight: 'bold', marginTop: '1rem' }}>
+                  Project: {project.name}
+                </p>
+              </div>
+              <div className="modal-footer">
+                <button
+                  onClick={handleDeleteCancel}
+                  className="btn btn-secondary"
+                  disabled={deleting}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeleteConfirm}
+                  className="btn btn-danger"
+                  disabled={deleting}
+                >
+                  {deleting ? (
+                    <>
+                      <span className="material-symbols-outlined spin" style={{ marginRight: '0.5rem' }}>sync</span>
+                      Deleting...
+                    </>
+                  ) : (
+                    <>
+                      <span className="material-symbols-outlined" style={{ marginRight: '0.5rem' }}>delete</span>
+                      Delete Project
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* 검색 및 필터 바 */}
         <div className="search-filter-bar">

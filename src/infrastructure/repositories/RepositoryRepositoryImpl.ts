@@ -8,6 +8,7 @@ import type {
   SaveRepositoryToS3Request,
   SaveRepositoryToS3Response,
 } from '../../application/dto/RepositoryDTO';
+import type { RepositoryContent } from '../../domain/repositories/RepositoryRepository';
 
 export class RepositoryRepositoryImpl implements RepositoryRepository {
   async listRepositories(request?: ListRepositoriesRequest): Promise<{
@@ -61,6 +62,45 @@ export class RepositoryRepositoryImpl implements RepositoryRepository {
     } catch (error: any) {
       console.error('Failed to save repository to S3:', error);
       throw new Error(error.message || 'Failed to save repository to S3');
+    }
+  }
+
+  async listBranches(owner: string, repo: string): Promise<string[]> {
+    try {
+      const url = `api/repos/${owner}/${repo}/branches`;
+      
+      // ApiClient가 이미 응답의 data 필드를 추출하므로, response는 바로 배열입니다
+      const response = await apiClient.get<string[]>(url);
+      
+      // response가 배열인지 확인 (배열이 아닐 수도 있으므로 안전하게 처리)
+      return Array.isArray(response) ? response : [];
+    } catch (error: any) {
+      console.error('Failed to list branches:', error);
+      throw new Error(error.message || 'Failed to list branches');
+    }
+  }
+
+  async getRepositoryContents(owner: string, repo: string, path?: string, ref?: string): Promise<RepositoryContent[]> {
+    try {
+      const params = new URLSearchParams();
+      if (path) {
+        params.append('path', path);
+      }
+      if (ref) {
+        params.append('ref', ref);
+      }
+      
+      const queryString = params.toString();
+      const url = `api/repos/${owner}/${repo}/contents${queryString ? `?${queryString}` : ''}`;
+      
+      // ApiClient가 이미 응답의 data 필드를 추출하므로, response는 바로 배열입니다
+      const response = await apiClient.get<RepositoryContent[]>(url);
+      
+      // response가 배열인지 확인 (배열이 아닐 수도 있으므로 안전하게 처리)
+      return Array.isArray(response) ? response : [];
+    } catch (error: any) {
+      console.error('Failed to get repository contents:', error);
+      throw new Error(error.message || 'Failed to get repository contents');
     }
   }
 }
