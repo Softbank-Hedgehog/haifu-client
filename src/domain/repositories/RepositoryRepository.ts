@@ -18,7 +18,7 @@ export interface RepositoryRepository {
     page: number;
     total: number;
   }>;
-  saveRepositoryToS3(owner: string, projectId: string, request: SaveRepositoryToS3Request): Promise<SaveRepositoryToS3Response>;
+  saveRepositoryToS3(request: SaveRepositoryToS3Request): Promise<SaveRepositoryToS3Response>;
   listBranches(owner: string, repo: string): Promise<string[]>;
   getRepositoryContents(owner: string, repo: string, path?: string, ref?: string): Promise<RepositoryContent[]>;
 }

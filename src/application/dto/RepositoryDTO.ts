@@ -25,18 +25,12 @@ export interface ListRepositoriesResponse {
 
 // S3에 저장할 Repository 요청
 export interface SaveRepositoryToS3Request {
-  id: number;
-  name: string;
-  full_name: string;
-  description: string | null;
-  html_url: string;
-  clone_url: string;
-  default_branch: string;
-  language: string | null;
-  private: boolean;
-  updated_at: string;
+  project_id: string;
+  service_id?: string;
+  owner: string;
+  repo: string;
   branch: string;
-  'Source Directory': string; // API 스펙에 따르면 공백이 있는 Pascal Case 필드명
+  source_path: string;
 }
 
 // S3 저장 응답 (ApiClient가 data 필드를 추출하므로)

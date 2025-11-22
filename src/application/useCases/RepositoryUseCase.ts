@@ -13,8 +13,8 @@ export class RepositoryUseCase {
     return await this.repositoryRepository.listRepositories(request);
   }
 
-  async saveRepositoryToS3(owner: string, projectId: string, request: SaveRepositoryToS3Request): Promise<SaveRepositoryToS3Response> {
-    return await this.repositoryRepository.saveRepositoryToS3(owner, projectId, request);
+  async saveRepositoryToS3(request: SaveRepositoryToS3Request): Promise<SaveRepositoryToS3Response> {
+    return await this.repositoryRepository.saveRepositoryToS3(request);
   }
 
   async listBranches(owner: string, repo: string): Promise<string[]> {

@@ -51,9 +51,9 @@ export class RepositoryRepositoryImpl implements RepositoryRepository {
     }
   }
 
-  async saveRepositoryToS3(owner: string, projectId: string, request: SaveRepositoryToS3Request): Promise<SaveRepositoryToS3Response> {
+  async saveRepositoryToS3(request: SaveRepositoryToS3Request): Promise<SaveRepositoryToS3Response> {
     try {
-      const url = `api/github/${owner}/${projectId}`;
+      const url = `api/github/s3`;
       
       // ApiClient가 이미 응답의 data 필드를 추출하므로, response는 { url: string } 형식입니다
       const response = await apiClient.post<SaveRepositoryToS3Response>(url, request);

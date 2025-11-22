@@ -63,29 +63,14 @@ const ServiceDeploymentFlow: React.FC = () => {
         setLoading(true);
         
         // Repository를 S3에 저장
-        // clone_url 생성: html_url에서 .git 확장자를 추가하거나 변경
-        const cloneUrl = selectedRepository.htmlUrl.endsWith('.git')
-          ? selectedRepository.htmlUrl
-          : `${selectedRepository.htmlUrl}.git`;
-
-        const response = await repositoryUseCase.saveRepositoryToS3(
-          repository.owner,
-          projectId,
-          {
-            id: selectedRepository.id,
-            name: selectedRepository.name,
-            full_name: selectedRepository.fullName,
-            description: selectedRepository.description,
-            html_url: selectedRepository.htmlUrl,
-            clone_url: cloneUrl,
-            default_branch: repository.branch || 'main',
-            language: selectedRepository.language || null,
-            private: selectedRepository.private,
-            updated_at: selectedRepository.updatedAt.toISOString(),
-            branch: repository.branch || 'main',
-            'Source Directory': repository.path || '/',
-          }
-        );
+        // Step 1 시점에는 service_id가 아직 없으므로 빈 문자열로 전송
+        const response = await repositoryUseCase.saveRepositoryToS3({
+          project_id: projectId || '',
+          owner: repository.owner,
+          repo: repository.name,
+          branch: repository.branch || 'main',
+          source_path: repository.path || '/',
+        });
 
         // S3 URL 저장
         setS3Url(response.url);
