@@ -90,17 +90,15 @@ export class ResourceRepositoryImpl implements ResourceRepository {
 
   async listResources(projectId: string): Promise<Resource[]> {
     try {
-      interface ListResourcesData {
-        items: ServerServiceResponse[];
-        page: number;
-        per_page: number;
-        total: number;
-      }
-      const response = await apiClient.get<ListResourcesData>(
+      // ApiClient가 이미 응답의 data 필드를 반환하므로, response는 바로 배열입니다
+      const response = await apiClient.get<ServerServiceResponse[]>(
         `api/projects/${projectId}/services`
       );
 
-      return response.items.map((s) => ({
+      // response가 배열인지 확인 (배열이 아닐 수도 있으므로 안전하게 처리)
+      const resources = Array.isArray(response) ? response : [];
+
+      return resources.map((s) => ({
         id: s.id,
         projectId: s.project_id,
         type: 'service' as const,
