@@ -102,12 +102,11 @@ const AppRoutes: React.FC = () => {
 };
 
 const App: React.FC = () => {
-  const basename = import.meta.env.PROD ? '/haifu-client' : '/';
   
   return (
     <DependencyProvider>
       <AuthProvider>
-        <BrowserRouter basename={basename}>
+        <BrowserRouter>
           <AppRoutes />
         </BrowserRouter>
       </AuthProvider>
