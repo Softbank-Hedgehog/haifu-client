@@ -35,8 +35,8 @@ export interface SaveRepositoryToS3Request {
   language: string | null;
   private: boolean;
   updated_at: string;
-  branch?: string;
-  sourceDirectory?: string;
+  branch: string;
+  'Source Directory': string; // API 스펙에 따르면 공백이 있는 Pascal Case 필드명
 }
 
 // S3 저장 응답 (ApiClient가 data 필드를 추출하므로)

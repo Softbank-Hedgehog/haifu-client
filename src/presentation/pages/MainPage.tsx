@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDependencies } from '../context/DependencyContext';
 import { ProjectUseCase } from '../../application/useCases/ProjectUseCase';
@@ -13,10 +13,32 @@ const MainPage: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deletingProjectId, setDeletingProjectId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const menuRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   useEffect(() => {
     loadProjects();
   }, []);
+
+  // 드롭다운 외부 클릭 시 닫기
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (openMenuId) {
+        const menuElement = menuRefs.current[openMenuId];
+        if (menuElement && !menuElement.contains(event.target as Node)) {
+          setOpenMenuId(null);
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [openMenuId]);
 
   const loadProjects = async () => {
     try {
@@ -36,6 +58,43 @@ const MainPage: React.FC = () => {
 
   const handleProjectClick = (projectId: string) => {
     navigate(`/projects/${projectId}`);
+  };
+
+  const handleMenuToggle = (e: React.MouseEvent, projectId: string) => {
+    e.stopPropagation(); // 카드 클릭 이벤트 방지
+    setOpenMenuId(openMenuId === projectId ? null : projectId);
+  };
+
+  const handleDeleteClick = (e: React.MouseEvent, projectId: string) => {
+    e.stopPropagation();
+    setOpenMenuId(null);
+    setDeletingProjectId(projectId);
+    setShowDeleteConfirm(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deletingProjectId) return;
+
+    try {
+      setDeleting(true);
+      await projectUseCase.deleteProject(deletingProjectId);
+      // 프로젝트 목록에서 제거
+      setProjects(projects.filter(p => p.id !== deletingProjectId));
+      setShowDeleteConfirm(false);
+      setDeletingProjectId(null);
+    } catch (error: any) {
+      console.error('Failed to delete project:', error);
+      alert(error.message || 'Failed to delete project. Please try again.');
+      setShowDeleteConfirm(false);
+      setDeletingProjectId(null);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setShowDeleteConfirm(false);
+    setDeletingProjectId(null);
   };
 
   // 검색 필터링
@@ -112,8 +171,28 @@ const MainPage: React.FC = () => {
                       folder
                     </span>
                   </div>
-                  <div className="project-card-actions">
-                    <span className="material-symbols-outlined">more_vert</span>
+                  <div 
+                    className="project-card-actions"
+                    ref={(el) => (menuRefs.current[project.id] = el)}
+                  >
+                    <button
+                      className="project-menu-toggle"
+                      onClick={(e) => handleMenuToggle(e, project.id)}
+                      aria-label="More options"
+                    >
+                      <span className="material-symbols-outlined">more_vert</span>
+                    </button>
+                    {openMenuId === project.id && (
+                      <div className="project-menu-dropdown">
+                        <button
+                          className="project-menu-item delete-item"
+                          onClick={(e) => handleDeleteClick(e, project.id)}
+                        >
+                          <span className="material-symbols-outlined">delete</span>
+                          <span>Delete</span>
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="project-card-body">
@@ -130,6 +209,59 @@ const MainPage: React.FC = () => {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* 삭제 확인 다이얼로그 */}
+        {showDeleteConfirm && deletingProjectId && (
+          <div className="modal-overlay" onClick={handleDeleteCancel}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <h2>Delete Project</h2>
+                <button
+                  onClick={handleDeleteCancel}
+                  className="modal-close-btn"
+                  disabled={deleting}
+                >
+                  <span className="material-symbols-outlined">close</span>
+                </button>
+              </div>
+              <div className="modal-body">
+                <p>Are you sure you want to delete this project?</p>
+                <p style={{ color: 'var(--text-slate-400)', fontSize: '0.875rem', marginTop: '0.5rem' }}>
+                  <strong>Warning:</strong> This action cannot be undone. All services and deployments under this project will also be deleted.
+                </p>
+                <p style={{ fontWeight: 'bold', marginTop: '1rem' }}>
+                  Project: {projects.find(p => p.id === deletingProjectId)?.name || 'Unknown'}
+                </p>
+              </div>
+              <div className="modal-footer">
+                <button
+                  onClick={handleDeleteCancel}
+                  className="btn btn-secondary"
+                  disabled={deleting}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeleteConfirm}
+                  className="btn btn-danger"
+                  disabled={deleting}
+                >
+                  {deleting ? (
+                    <>
+                      <span className="material-symbols-outlined spin" style={{ marginRight: '0.5rem' }}>sync</span>
+                      Deleting...
+                    </>
+                  ) : (
+                    <>
+                      <span className="material-symbols-outlined" style={{ marginRight: '0.5rem' }}>delete</span>
+                      Delete Project
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>

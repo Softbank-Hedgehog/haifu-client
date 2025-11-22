@@ -62,36 +62,36 @@ const Step4ReviewAndCreate: React.FC<Step4ReviewAndCreateProps> = ({
           </div>
 
           {/* Step 2: Build Configuration */}
-          <div className="review-section">
-            <div className="review-section-header">
-              <h3>2. Build Configuration</h3>
-              <span className="material-symbols-outlined">edit</span>
-            </div>
-            <div className="review-content">
-              <div className="review-item">
-                <span className="review-label">Configuration Source:</span>
-                <span className="review-value">API</span>
+            <div className="review-section">
+              <div className="review-section-header">
+                <h3>2. Build Configuration</h3>
+                <span className="material-symbols-outlined">edit</span>
               </div>
-              <div className="review-item">
-                <span className="review-label">Runtime:</span>
-                <span className="review-value">{buildConfig.runtime}</span>
-              </div>
-              {buildConfig.buildCommand && (
+              <div className="review-content">
                 <div className="review-item">
-                  <span className="review-label">Build Command:</span>
-                  <span className="review-value">{buildConfig.buildCommand}</span>
+                  <span className="review-label">Configuration Source:</span>
+                  <span className="review-value">API</span>
                 </div>
-              )}
-              <div className="review-item">
-                <span className="review-label">Start Command:</span>
-                <span className="review-value">{buildConfig.startCommand || 'Not specified'}</span>
-              </div>
-              <div className="review-item">
-                <span className="review-label">Port:</span>
-                <span className="review-value">{buildConfig.port}</span>
+                <div className="review-item">
+                  <span className="review-label">Runtime:</span>
+                  <span className="review-value">{buildConfig.runtime}</span>
+                </div>
+                {buildConfig.buildCommand && (
+                  <div className="review-item">
+                    <span className="review-label">Build Command:</span>
+                    <span className="review-value">{buildConfig.buildCommand}</span>
+                  </div>
+                )}
+                <div className="review-item">
+                  <span className="review-label">Start Command:</span>
+                  <span className="review-value">{buildConfig.startCommand || 'Not specified'}</span>
+                </div>
+                <div className="review-item">
+                  <span className="review-label">Port:</span>
+                  <span className="review-value">{buildConfig.port}</span>
+                </div>
               </div>
             </div>
-          </div>
 
           {/* Step 3: Service Configuration */}
           <div className="review-section">

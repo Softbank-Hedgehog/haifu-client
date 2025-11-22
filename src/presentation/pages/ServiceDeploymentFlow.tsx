@@ -83,7 +83,7 @@ const ServiceDeploymentFlow: React.FC = () => {
             private: selectedRepository.private,
             updated_at: selectedRepository.updatedAt.toISOString(),
             branch: repository.branch || 'main',
-            sourceDirectory: repository.path || '/',
+            'Source Directory': repository.path || '/',
           }
         );
 
