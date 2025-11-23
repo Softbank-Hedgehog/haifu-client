@@ -65,6 +65,10 @@ const ResourceDetailPage: React.FC = () => {
     setShowDeleteConfirm(false);
   };
 
+  const handleDeploy = () => {
+    navigate(`/projects/${projectId}/resources/${resourceId}/redeploy`);
+  };
+
   if (loading || !resource) {
     return (
       <MainLayout>
@@ -83,25 +87,27 @@ const ResourceDetailPage: React.FC = () => {
             <span className="material-symbols-outlined">arrow_back</span>
           </button>
           <div className="page-title-section">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div>
-                <div className="service-header-info">
-                  <h1>{resource.name}</h1>
-                  <span className={`status-badge status-${resource.status}`}>
-                    {resource.status}
-                  </span>
-                </div>
-                <p className="page-subtitle">Service deployment details and monitoring</p>
-              </div>
-              <button
-                onClick={handleDeleteClick}
-                className="btn btn-danger btn-icon"
-                title="Delete service"
-                disabled={deleting}
-              >
-                <span className="material-symbols-outlined">delete</span>
-              </button>
+            <div className="service-header-info">
+              <h1>{resource.name}</h1>
+              <span className={`status-badge status-${resource.status}`}>
+                {resource.status}
+              </span>
             </div>
+            <p className="page-subtitle">Service deployment details and monitoring</p>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <button onClick={handleDeploy} className="btn btn-primary">
+              <span className="material-symbols-outlined">rocket_launch</span>
+              Deploy
+            </button>
+            <button
+              onClick={handleDeleteClick}
+              className="btn btn-danger btn-icon"
+              title="Delete service"
+              disabled={deleting}
+            >
+              <span className="material-symbols-outlined">delete</span>
+            </button>
           </div>
         </div>
 

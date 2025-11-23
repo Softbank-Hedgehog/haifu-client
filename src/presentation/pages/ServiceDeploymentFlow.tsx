@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useDependencies } from '../context/DependencyContext';
+import { useAuth } from '../context/AuthContext';
+import { TokenStorage } from '../../infrastructure/storage/TokenStorage';
 import { ResourceUseCase } from '../../application/useCases/ResourceUseCase';
 import { RepositoryUseCase } from '../../application/useCases/RepositoryUseCase';
 import type { ServiceDeploymentConfig } from '../../application/dto/ResourceDTO';
@@ -17,6 +19,7 @@ const ServiceDeploymentFlow: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { user } = useAuth();
   const { resourceRepository, repositoryRepository } = useDependencies();
   const resourceUseCase = new ResourceUseCase(resourceRepository);
   const repositoryUseCase = new RepositoryUseCase(repositoryRepository);
@@ -43,6 +46,9 @@ const ServiceDeploymentFlow: React.FC = () => {
     port: '8080',
   });
 
+  // 배포 타입 (static 또는 dynamic)
+  const [serviceType, setServiceType] = useState<'static' | 'dynamic' | null>(null);
+
   // Step 3: Service Configuration
   const [serviceConfig, setServiceConfig] = useState({
     name: '',
@@ -54,10 +60,36 @@ const ServiceDeploymentFlow: React.FC = () => {
   const handleNext = async () => {
     // Step 1에서 Next 클릭 시 repository를 S3에 저장
     if (currentStep === 1) {
-      if (!projectId || !repository.owner || !repository.name || !selectedRepository) {
+      // 디버깅: 조건 확인
+      console.log('[ServiceDeploymentFlow] Step 1 Next clicked', {
+        projectId,
+        repositoryOwner: repository.owner,
+        repositoryName: repository.name,
+        repositoryBranch: repository.branch,
+        selectedRepository,
+      });
+
+      if (!projectId) {
+        alert('Project ID is missing. Please try again.');
+        return;
+      }
+
+      if (!repository.owner || !repository.name) {
         alert('Please select a repository first');
         return;
       }
+
+      // 브랜치가 선택되지 않았으면 첫 번째 브랜치를 자동 선택하거나 경고
+      if (!repository.branch) {
+        alert('Please select a branch first');
+        return;
+      }
+
+      // selectedRepository는 optional로 처리 (repository 정보로 대체 가능)
+      const repoOwner = repository.owner;
+      const repoName = repository.name;
+      const repoBranch = repository.branch;
+      const repoPath = repository.path || '/';
 
       try {
         setLoading(true);
@@ -85,21 +117,34 @@ const ServiceDeploymentFlow: React.FC = () => {
         const tmpId = generateRandomLong();
         console.log('[ServiceDeploymentFlow] Generated tmp_id (Long):', tmpId);
         
-        const response = await repositoryUseCase.saveRepositoryToS3({
-          project_id: projectId || '',
+        const requestPayload = {
+          project_id: projectId,
           tmp_id: tmpId,
-          owner: repository.owner,
-          repo: repository.name,
-          branch: repository.branch || 'main',
-          source_path: repository.path || '/',
-        });
+          owner: repoOwner,
+          repo: repoName,
+          branch: repoBranch,
+          source_path: repoPath,
+        };
+        
+        console.log('[ServiceDeploymentFlow] Sending S3 save request:', requestPayload);
+        
+        const response = await repositoryUseCase.saveRepositoryToS3(requestPayload);
+
+        console.log('[ServiceDeploymentFlow] S3 save response:', response);
 
         // S3 URL 저장
-        setS3Url(response.url);
-        setCurrentStep(currentStep + 1);
+        if (response && response.url) {
+          setS3Url(response.url);
+          console.log('[ServiceDeploymentFlow] Moving to step 2');
+          setCurrentStep(2);
+        } else {
+          console.error('[ServiceDeploymentFlow] Invalid response: missing url', response);
+          alert('Invalid response from server. Please try again.');
+        }
       } catch (error: any) {
-        console.error('Failed to save repository to S3:', error);
-        alert(error.message || 'Failed to save repository to S3. Please try again.');
+        console.error('[ServiceDeploymentFlow] Failed to save repository to S3:', error);
+        const errorMessage = error?.response?.data?.message || error?.message || 'Failed to save repository to S3. Please try again.';
+        alert(errorMessage);
       } finally {
         setLoading(false);
       }
@@ -140,7 +185,11 @@ const ServiceDeploymentFlow: React.FC = () => {
         serverSpec: {
           cpu: serviceConfig.cpu,
           memory: serviceConfig.memory,
+          port: parseInt(buildConfig.port) || 8080,
         },
+        runtime: buildConfig.runtime,
+        buildCommand: buildConfig.buildCommand || undefined,
+        startCommand: buildConfig.startCommand || undefined,
         environmentVariables: serviceConfig.environmentVariables.reduce(
           (acc, env) => {
             if (env.name && env.value) {
@@ -152,12 +201,15 @@ const ServiceDeploymentFlow: React.FC = () => {
         ),
       };
 
+      // userId 가져오기
+      const userId = user?.id || '';
+
       const resource = await resourceUseCase.createResource({
         projectId,
         type: resourceType,
         name: serviceConfig.name.trim(),
         config: deploymentConfig,
-      });
+      }, userId);
 
       navigate(`/projects/${projectId}/resources/${resource.id}/pipeline`);
     } catch (error) {
@@ -231,13 +283,19 @@ const ServiceDeploymentFlow: React.FC = () => {
             <Step2BuildConfiguration
               buildConfig={buildConfig}
               onBuildConfigChange={setBuildConfig}
+              onServiceTypeChange={setServiceType}
               s3Url={s3Url}
+              repository={repository}
+              projectId={projectId || ''}
+              userId={user?.id || ''}
+              repositoryUseCase={repositoryUseCase}
             />
           )}
           {currentStep === 3 && (
             <Step3ServiceConfiguration
               serviceConfig={serviceConfig}
               onServiceConfigChange={setServiceConfig}
+              serviceType={serviceType}
             />
           )}
           {currentStep === 4 && (
@@ -262,8 +320,12 @@ const ServiceDeploymentFlow: React.FC = () => {
               </button>
             )}
             {currentStep < 4 ? (
-              <button onClick={handleNext} className="btn btn-primary">
-                Next Step
+              <button 
+                onClick={handleNext} 
+                className="btn btn-primary"
+                disabled={loading}
+              >
+                {loading ? 'Loading...' : 'Next Step'}
                 <span className="material-symbols-outlined">arrow_forward</span>
               </button>
             ) : (

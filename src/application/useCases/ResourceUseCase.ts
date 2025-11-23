@@ -10,8 +10,9 @@ export class ResourceUseCase {
     this.resourceRepository = resourceRepository;
   }
 
-  async createResource(request: CreateResourceRequest): Promise<Resource> {
-    return this.resourceRepository.createResource(request);
+  async createResource(request: CreateResourceRequest, userId?: string): Promise<Resource> {
+    const impl = this.resourceRepository as any;
+    return impl.createResource(request, userId);
   }
 
   async listResources(projectId: string): Promise<Resource[]> {

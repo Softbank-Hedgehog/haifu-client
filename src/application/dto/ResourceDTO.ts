@@ -21,6 +21,15 @@ export interface ServiceDeploymentConfig {
   techStack?: TechStack;
   serverSpec: ServerSpec;
   environmentVariables?: Record<string, string>;
+  buildCommand?: string;
+  startCommand?: string;
+  runtime?: string;
+  serviceType?: 'static' | 'dynamic';
+  buildCommands?: string[];
+  buildOutputDir?: string;
+  nodeVersion?: string;
+  dockerfile?: string;
+  containerPort?: number;
 }
 
 export interface DatabaseConfig {

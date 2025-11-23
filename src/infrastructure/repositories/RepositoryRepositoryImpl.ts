@@ -9,6 +9,8 @@ import type {
   SaveRepositoryToS3Response,
 } from '../../application/dto/RepositoryDTO';
 import type { RepositoryContent } from '../../domain/repositories/RepositoryRepository';
+import type { AgentAnalysisRequest, AgentAnalysisResponse } from '../../application/dto/AgentDTO';
+import type { DeploymentRequest, DeploymentResponse } from '../../application/dto/DeploymentDTO';
 
 export class RepositoryRepositoryImpl implements RepositoryRepository {
   async listRepositories(request?: ListRepositoriesRequest): Promise<{
@@ -101,6 +103,70 @@ export class RepositoryRepositoryImpl implements RepositoryRepository {
     } catch (error: any) {
       console.error('Failed to get repository contents:', error);
       throw new Error(error.message || 'Failed to get repository contents');
+    }
+  }
+
+  async analyzeProjectWithAI(request: AgentAnalysisRequest): Promise<AgentAnalysisResponse> {
+    try {
+      // AI 에이전트 API URL (환경 변수에서 가져오거나 기본값 사용)
+      const agentApiUrl = import.meta.env.VITE_AGENT_API_URL || 'https://abc123def456.execute-api.ap-northeast-2.amazonaws.com/dev/agent';
+      
+      // 직접 fetch 사용 (다른 base URL이므로 ApiClient 사용 안 함)
+      const response = await fetch(agentApiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(request),
+      });
+
+      if (!response.ok) {
+        throw new Error(`AI Agent API error: ${response.status} ${response.statusText}`);
+      }
+
+      const data: AgentAnalysisResponse = await response.json();
+      return data;
+    } catch (error: any) {
+      console.error('Failed to analyze project with AI:', error);
+      throw new Error(error.message || 'Failed to analyze project with AI');
+    }
+  }
+
+  async determineDeploymentType(request: DeploymentRequest): Promise<DeploymentResponse> {
+    try {
+      // Deployment API URL (환경 변수에서 가져오거나 기본값 사용)
+      const deploymentApiUrl = import.meta.env.VITE_DEPLOYMENT_API_URL || 'https://ax1iakl8t8.execute-api.ap-northeast-2.amazonaws.com/prod/deployment';
+      
+      // 직접 fetch 사용 (다른 base URL이므로 ApiClient 사용 안 함)
+      const response = await fetch(deploymentApiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(request),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Deployment API error: ${response.status} ${response.statusText}`);
+      }
+
+      const rawData: any = await response.json();
+      
+      // API 응답에서 deployment_type이 오는 경우 service_type으로 변환
+      const normalizedData: DeploymentResponse = {
+        service_type: rawData.deployment_type 
+          ? (rawData.deployment_type.toLowerCase() as 'static' | 'dynamic')
+          : rawData.body?.deployment_type
+          ? (rawData.body.deployment_type.toLowerCase() as 'static' | 'dynamic')
+          : rawData.service_type,
+        recommendation: rawData.recommendation,
+        detected_framework: rawData.detected_framework,
+      };
+      
+      return normalizedData;
+    } catch (error: any) {
+      console.error('Failed to determine deployment type:', error);
+      throw new Error(error.message || 'Failed to determine deployment type');
     }
   }
 }

@@ -1,4 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import type { RepositoryUseCase } from '../../../application/useCases/RepositoryUseCase';
+import type { GitHubRepository } from '../../../domain/valueObjects/GitHubRepository';
+import type { AgentAnalysisRequest } from '../../../application/dto/AgentDTO';
+import type { DeploymentRequest } from '../../../application/dto/DeploymentDTO';
 
 interface BuildConfig {
   runtime: string;
@@ -10,27 +14,256 @@ interface BuildConfig {
 interface Step2BuildConfigurationProps {
   buildConfig: BuildConfig;
   onBuildConfigChange: (config: BuildConfig) => void;
+  onServiceTypeChange?: (serviceType: 'static' | 'dynamic') => void;
   s3Url?: string | null;
+  repository: GitHubRepository;
+  projectId: string;
+  userId: string;
+  repositoryUseCase: RepositoryUseCase;
 }
 
 const Step2BuildConfiguration: React.FC<Step2BuildConfigurationProps> = ({
   buildConfig,
   onBuildConfigChange,
+  onServiceTypeChange,
   s3Url,
+  repository,
+  projectId,
+  userId,
+  repositoryUseCase,
 }) => {
   const [showDockerInfo, setShowDockerInfo] = useState(false);
-  const dockerDetected = true; // placeholder until backend is wired
+  const [dockerDetected, setDockerDetected] = useState(false);
+  const [dockerfileContent, setDockerfileContent] = useState<string | null>(null);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [aiRecommendation, setAiRecommendation] = useState<string | null>(null);
 
-  const handleSendClick = () => {
-    // TODO: 화살표 버튼 클릭 시 S3 URL을 사용하는 API 호출
-    // s3Url을 사용하여 추가 API 호출
-    console.log('S3 URL:', s3Url);
+  // 주요 파일 목록 (AI 분석에 사용할 파일들)
+  const importantFiles = [
+    'package.json',
+    'requirements.txt',
+    'pom.xml',
+    'build.gradle',
+    'go.mod',
+    'Dockerfile',
+    'docker-compose.yml',
+    'package-lock.json',
+    'yarn.lock',
+    'tsconfig.json',
+    'webpack.config.js',
+    'vite.config.js',
+    'index.js',
+    'app.js',
+    'main.py',
+    'setup.py',
+  ];
+
+  // Repository 파일 내용 가져오기
+  const fetchRepositoryFiles = async (): Promise<Array<{ path: string; content: string }>> => {
+    if (!repository.owner || !repository.name) {
+      return [];
+    }
+
+    const files: Array<{ path: string; content: string }> = [];
+    
+    try {
+      // 루트 디렉토리 내용 가져오기
+      const rootContents = await repositoryUseCase.listRepositories();
+      const repositoryContents = await repositoryUseCase.getRepositoryContents(
+        repository.owner,
+        repository.name,
+        repository.path || '/',
+        repository.branch || 'main'
+      );
+
+      // 주요 파일들 찾기 및 내용 가져오기
+      for (const file of importantFiles) {
+        try {
+          const fileContents = await repositoryUseCase.getRepositoryContents(
+            repository.owner,
+            repository.name,
+            file,
+            repository.branch || 'main'
+          );
+          
+          if (fileContents && fileContents.length > 0) {
+            const fileContent = fileContents[0];
+            if (fileContent.type === 'file' && fileContent.content) {
+              // Base64 디코딩 (GitHub API는 base64로 인코딩됨)
+              try {
+                const decodedContent = atob(fileContent.content.replace(/\s/g, ''));
+                files.push({
+                  path: fileContent.path,
+                  content: decodedContent,
+                });
+              } catch (e) {
+                // Base64 디코딩 실패 시 원본 내용 사용
+                files.push({
+                  path: fileContent.path,
+                  content: fileContent.content,
+                });
+              }
+            }
+          }
+        } catch (error) {
+          // 파일을 찾지 못했으면 무시
+          console.debug(`File ${file} not found`);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch repository files:', error);
+    }
+
+    return files;
+  };
+
+  // S3 URL에서 bucket과 prefix 추출
+  const parseS3Url = (url: string): { bucket: string; prefix: string } | null => {
+    try {
+      // s3://bucket/prefix 형식
+      if (url.startsWith('s3://')) {
+        const withoutProtocol = url.substring(5); // 's3://' 제거
+        const firstSlash = withoutProtocol.indexOf('/');
+        if (firstSlash === -1) {
+          return { bucket: withoutProtocol, prefix: '' };
+        }
+        const bucket = withoutProtocol.substring(0, firstSlash);
+        const prefix = withoutProtocol.substring(firstSlash + 1);
+        return { bucket, prefix };
+      }
+
+      // https://bucket.s3.region.amazonaws.com/prefix 형식
+      if (url.startsWith('https://')) {
+        const urlObj = new URL(url);
+        const hostname = urlObj.hostname;
+        
+        // bucket.s3.region.amazonaws.com 형식
+        if (hostname.includes('.s3.') && hostname.includes('.amazonaws.com')) {
+          const bucket = hostname.split('.')[0];
+          const prefix = urlObj.pathname.substring(1); // 첫 번째 '/' 제거
+          return { bucket, prefix };
+        }
+        
+        // s3.region.amazonaws.com/bucket/prefix 형식
+        if (hostname.includes('.amazonaws.com')) {
+          const pathParts = urlObj.pathname.split('/').filter(p => p);
+          if (pathParts.length >= 1) {
+            const bucket = pathParts[0];
+            const prefix = pathParts.slice(1).join('/');
+            return { bucket, prefix };
+          }
+        }
+      }
+
+      // JSON 형식으로 받은 경우 (예: {"bucket": "...", "prefix": "..."})
+      try {
+        const parsed = JSON.parse(url);
+        if (parsed.bucket && parsed.prefix !== undefined) {
+          return { bucket: parsed.bucket, prefix: parsed.prefix };
+        }
+      } catch (e) {
+        // JSON 파싱 실패는 무시
+      }
+
+      console.error('[Step2BuildConfiguration] Unable to parse S3 URL:', url);
+      return null;
+    } catch (error) {
+      console.error('[Step2BuildConfiguration] Error parsing S3 URL:', error);
+      return null;
+    }
+  };
+
+  // Deployment API 호출하여 정적/동적 배포 타입 판단
+  const handleSendClick = async () => {
     if (!s3Url) {
       alert('Repository has not been saved to S3 yet. Please go back and complete Step 1.');
       return;
     }
-    // TODO: s3Url을 사용하여 실제 API 호출
+
+    try {
+      setAnalyzing(true);
+      setAiRecommendation(null);
+
+      // S3 URL에서 bucket과 prefix 파싱
+      const s3Info = parseS3Url(s3Url);
+      if (!s3Info) {
+        alert('S3 URL 형식이 올바르지 않습니다. S3 URL을 확인해주세요.');
+        return;
+      }
+
+      // Deployment API 호출
+      const deploymentRequest: DeploymentRequest = {
+        s3_snapshot: {
+          bucket: s3Info.bucket,
+          s3_prefix: s3Info.prefix,
+        },
+      };
+
+      console.log('[Step2BuildConfiguration] Calling Deployment API:', deploymentRequest);
+      const response = await repositoryUseCase.determineDeploymentType(deploymentRequest);
+      console.log('[Step2BuildConfiguration] Deployment API Response:', response);
+
+      // 응답에서 배포 타입 추출 (service_type만 사용)
+      if (response && response.service_type) {
+        const serviceType = response.service_type;
+        const recommendation = response.recommendation || `Deployment type detected: ${serviceType}`;
+        
+        // 부모 컴포넌트에 배포 타입 전달
+        if (onServiceTypeChange) {
+          onServiceTypeChange(serviceType);
+        }
+        
+        setAiRecommendation(recommendation);
+
+        // 추천 받은 내용으로 buildConfig 업데이트 (필요한 경우)
+        const updatedConfig: BuildConfig = { ...buildConfig };
+
+        // 배포 타입에 따라 기본 설정 조정
+        if (serviceType === 'static') {
+          // 정적 배포의 경우 기본 설정
+          if (!updatedConfig.buildCommand) {
+            updatedConfig.buildCommand = 'npm run build';
+          }
+          if (!updatedConfig.startCommand) {
+            updatedConfig.startCommand = '';
+          }
+        } else {
+          // 동적 배포의 경우
+          if (!updatedConfig.startCommand) {
+            updatedConfig.startCommand = 'npm start';
+          }
+        }
+
+        // Port는 기본값 사용
+        if (!updatedConfig.port) {
+          updatedConfig.port = '80';
+        }
+
+        // 업데이트된 config 적용
+        onBuildConfigChange(updatedConfig);
+
+        // 감지된 프레임워크 표시
+        if (response.detected_framework) {
+          setAiRecommendation(`${recommendation}\n\nDetected framework: ${response.detected_framework}`);
+        }
+      } else {
+        alert('Deployment type을 받지 못했습니다. 수동으로 입력해주세요.');
+      }
+    } catch (error: any) {
+      console.error('[Step2BuildConfiguration] Failed to determine deployment type:', error);
+      alert(`배포 타입 판단에 실패했습니다: ${error.message || 'Unknown error'}\n수동으로 입력해주세요.`);
+    } finally {
+      setAnalyzing(false);
+    }
   };
+
+  // Step2에 진입했을 때 자동으로 AI 분석 실행 (선택사항)
+  useEffect(() => {
+    // 자동 분석을 원하면 아래 주석을 해제하세요
+    // if (s3Url && repository.owner && repository.name && !buildConfig.buildCommand) {
+    //   handleSendClick();
+    // }
+  }, [s3Url, repository.owner, repository.name]);
   const runtimeOptions = [
     { value: 'nodejs18', label: 'Node.js 18' },
     { value: 'nodejs20', label: 'Node.js 20' },
@@ -58,10 +291,12 @@ const Step2BuildConfiguration: React.FC<Step2BuildConfigurationProps> = ({
             type="button" 
             className="connections-btn"
             onClick={handleSendClick}
-            disabled={!s3Url}
-            title={!s3Url ? 'Complete Step 1 first' : 'Send to backend'}
+            disabled={!s3Url || analyzing}
+            title={!s3Url ? 'Complete Step 1 first' : analyzing ? 'Analyzing...' : 'Get AI recommendation'}
           >
-            <span className="material-symbols-outlined">send</span>
+            <span className={`material-symbols-outlined ${analyzing ? 'spin' : ''}`}>
+              {analyzing ? 'sync' : 'auto_awesome'}
+            </span>
           </button>
         </div>
 
@@ -145,12 +380,14 @@ const Step2BuildConfiguration: React.FC<Step2BuildConfigurationProps> = ({
                 </button>
                 {showDockerInfo && (
                   <pre className="dockerfile-preview">
-FROM node:18
-WORKDIR /app
-COPY . .
-RUN npm install
-CMD ["npm", "start"]
+                    {dockerfileContent || 'Dockerfile not found in repository.'}
                   </pre>
+                )}
+                {aiRecommendation && (
+                  <div className="ai-recommendation">
+                    <span className="material-symbols-outlined">psychology</span>
+                    <p>{aiRecommendation}</p>
+                  </div>
                 )}
               </div>
             </div>

@@ -10,14 +10,33 @@ interface ServiceConfig {
 interface Step3ServiceConfigurationProps {
   serviceConfig: ServiceConfig;
   onServiceConfigChange: (config: ServiceConfig) => void;
+  serviceType?: 'static' | 'dynamic' | null;
 }
 
 const Step3ServiceConfiguration: React.FC<Step3ServiceConfigurationProps> = ({
   serviceConfig,
   onServiceConfigChange,
+  serviceType,
 }) => {
-  const cpuOptions = [0.25, 0.5, 1, 2, 4];
-  const memoryOptions = [1, 2, 3, 4];
+  // CPU 옵션: 1 vCPU, 2 vCPU, 4 vCPU
+  const cpuOptions = [1, 2, 4];
+  
+  // Memory 옵션: 2 GB, 3 GB, 4 GB, 6 GB, 8 GB, 10 GB, 12 GB
+  const memoryOptions = [2, 3, 4, 6, 8, 10, 12];
+
+  // CPU-Memory 조합 제약 (AWS App Runner 기준)
+  const cpuMemoryCombinations: Record<number, number[]> = {
+    1: [2, 3, 4],   // 1 vCPU: 2 GB, 3 GB, 4 GB
+    2: [4, 6, 8],   // 2 vCPU: 4 GB, 6 GB, 8 GB
+    4: [8, 10, 12], // 4 vCPU: 8 GB, 10 GB, 12 GB
+  };
+
+  // 현재 CPU에 맞는 메모리 옵션 필터링
+  const getAvailableMemoryOptions = (cpu: number): number[] => {
+    return cpuMemoryCombinations[cpu] || [];
+  };
+
+  const availableMemoryOptions = getAvailableMemoryOptions(serviceConfig.cpu);
 
   const handleNameChange = (name: string) => {
     onServiceConfigChange({
@@ -27,9 +46,16 @@ const Step3ServiceConfiguration: React.FC<Step3ServiceConfigurationProps> = ({
   };
 
   const handleCpuChange = (cpu: number) => {
+    const availableMemory = getAvailableMemoryOptions(cpu);
+    // 현재 선택된 메모리가 새로운 CPU에 유효하지 않으면 첫 번째 유효한 메모리로 변경
+    const newMemory = availableMemory.includes(serviceConfig.memory) 
+      ? serviceConfig.memory 
+      : availableMemory[0];
+    
     onServiceConfigChange({
       ...serviceConfig,
       cpu,
+      memory: newMemory,
     });
   };
 
@@ -96,6 +122,7 @@ const Step3ServiceConfiguration: React.FC<Step3ServiceConfigurationProps> = ({
               value={serviceConfig.cpu}
               onChange={(e) => handleCpuChange(parseFloat(e.target.value))}
               required
+              disabled={serviceType === 'static'}
             >
               {cpuOptions.map((cpu) => (
                 <option key={cpu} value={cpu}>
@@ -103,7 +130,11 @@ const Step3ServiceConfiguration: React.FC<Step3ServiceConfigurationProps> = ({
                 </option>
               ))}
             </select>
-            <p className="form-hint">Select the CPU specification for your service.</p>
+            <p className="form-hint">
+              {serviceType === 'static' 
+                ? 'CPU and Memory are not configurable for static deployments.' 
+                : 'Select the CPU specification for your service.'}
+            </p>
           </div>
 
           <div className="form-group">
@@ -113,14 +144,19 @@ const Step3ServiceConfiguration: React.FC<Step3ServiceConfigurationProps> = ({
               value={serviceConfig.memory}
               onChange={(e) => handleMemoryChange(parseFloat(e.target.value))}
               required
+              disabled={serviceType === 'static'}
             >
-              {memoryOptions.map((memory) => (
+              {availableMemoryOptions.map((memory) => (
                 <option key={memory} value={memory}>
                   {memory} GB
                 </option>
               ))}
             </select>
-            <p className="form-hint">Select the memory specification for your service.</p>
+            <p className="form-hint">
+              {serviceType === 'static' 
+                ? 'CPU and Memory are not configurable for static deployments.' 
+                : 'Select the memory specification for your service (compatible with selected CPU).'}
+            </p>
           </div>
         </div>
 
