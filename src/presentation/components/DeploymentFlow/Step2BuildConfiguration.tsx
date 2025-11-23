@@ -202,8 +202,31 @@ const Step2BuildConfiguration: React.FC<Step2BuildConfigurationProps> = ({
       };
 
       console.log('[Step2BuildConfiguration] Calling Deployment API:', deploymentRequest);
-      const response = await repositoryUseCase.determineDeploymentType(deploymentRequest);
-      console.log('[Step2BuildConfiguration] Deployment API Response:', response);
+      let response: any;
+      try {
+        response = await repositoryUseCase.determineDeploymentType(deploymentRequest);
+        console.log('[Step2BuildConfiguration] Deployment API Response:', response);
+        console.log('[Step2BuildConfiguration] Response type:', typeof response);
+        console.log('[Step2BuildConfiguration] Has service_type:', !!response?.service_type);
+      } catch (error: any) {
+        console.error('[Step2BuildConfiguration] Failed to determine deployment type:', error);
+        throw error;
+      }
+
+      // 응답에서 배포 타입 추출
+      if (!response) {
+        console.error('[Step2BuildConfiguration] Response is null or undefined');
+        alert('Deployment type을 받지 못했습니다. 수동으로 입력해주세요.');
+        return;
+      }
+
+      if (!response.service_type) {
+        console.error('[Step2BuildConfiguration] service_type is missing in response');
+        console.error('[Step2BuildConfiguration] Response keys:', Object.keys(response || {}));
+        console.error('[Step2BuildConfiguration] Full response:', response);
+        alert('Deployment type을 받지 못했습니다. 수동으로 입력해주세요.');
+        return;
+      }
 
       // 응답에서 배포 타입 추출
       if (response && response.service_type) {

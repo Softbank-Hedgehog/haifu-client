@@ -135,7 +135,7 @@ export class RepositoryRepositoryImpl implements RepositoryRepository {
   async determineDeploymentType(request: DeploymentRequest): Promise<DeploymentResponse> {
     try {
       // Deployment API URL (환경 변수에서 가져오거나 기본값 사용)
-      const deploymentApiUrl = import.meta.env.VITE_DEPLOYMENT_API_URL || 'https://ax1iakl8t8.execute-api.ap-northeast-2.amazonaws.com/prod/deployment';
+      const deploymentApiUrl = 'https://ax1iakl8t8.execute-api.ap-northeast-2.amazonaws.com/prod/deployment';
       
       // 직접 fetch 사용 (다른 base URL이므로 ApiClient 사용 안 함)
       const response = await fetch(deploymentApiUrl, {
@@ -150,12 +150,76 @@ export class RepositoryRepositoryImpl implements RepositoryRepository {
         throw new Error(`Deployment API error: ${response.status} ${response.statusText}`);
       }
 
-      const apiResponse: DeploymentApiResponse = await response.json();
+      const apiResponse: any = await response.json();
       
-      // body가 문자열인 경우 JSON 파싱
-      const body = typeof apiResponse.body === 'string' 
-        ? JSON.parse(apiResponse.body) 
-        : apiResponse.body;
+      console.log('[RepositoryRepositoryImpl] Deployment API Raw Response:', apiResponse);
+      console.log('[RepositoryRepositoryImpl] Response type:', typeof apiResponse);
+      console.log('[RepositoryRepositoryImpl] Has statusCode:', !!apiResponse.statusCode);
+      console.log('[RepositoryRepositoryImpl] Has body:', !!apiResponse.body);
+      console.log('[RepositoryRepositoryImpl] Has service_type:', !!apiResponse.service_type);
+      
+      // 응답 형식 확인 및 body 추출
+      let body: any;
+      
+      // Lambda 응답 형식 (statusCode, headers, body)
+      if (apiResponse.statusCode !== undefined && apiResponse.body !== undefined) {
+        console.log('[RepositoryRepositoryImpl] Lambda response format detected');
+        // body가 문자열인 경우 JSON 파싱
+        if (typeof apiResponse.body === 'string') {
+          try {
+            body = JSON.parse(apiResponse.body);
+            console.log('[RepositoryRepositoryImpl] Parsed body from string:', body);
+          } catch (e) {
+            console.error('[RepositoryRepositoryImpl] Failed to parse body string:', e);
+            throw new Error('Failed to parse deployment API response body');
+          }
+        } else {
+          // body가 이미 객체인 경우
+          body = apiResponse.body;
+          console.log('[RepositoryRepositoryImpl] Using body as object:', body);
+        }
+      } 
+      // 직접 service_type이 있는 경우 (이미 파싱된 body)
+      else if (apiResponse.service_type) {
+        console.log('[RepositoryRepositoryImpl] Direct response format (already parsed)');
+        body = apiResponse;
+      }
+      // body 필드만 있는 경우
+      else if (apiResponse.body !== undefined) {
+        console.log('[RepositoryRepositoryImpl] Body field only format');
+        if (typeof apiResponse.body === 'string') {
+          try {
+            body = JSON.parse(apiResponse.body);
+          } catch (e) {
+            console.error('[RepositoryRepositoryImpl] Failed to parse body string:', e);
+            throw new Error('Failed to parse deployment API response body');
+          }
+        } else {
+          body = apiResponse.body;
+        }
+      }
+      // 그 외 - 전체 응답을 body로 사용
+      else {
+        console.log('[RepositoryRepositoryImpl] Using entire response as body');
+        body = apiResponse;
+      }
+      
+      console.log('[RepositoryRepositoryImpl] Final parsed body:', body);
+      console.log('[RepositoryRepositoryImpl] Body service_type:', body?.service_type);
+      
+      // body가 없거나 service_type이 없으면 에러
+      if (!body) {
+        console.error('[RepositoryRepositoryImpl] Body is null or undefined');
+        console.error('[RepositoryRepositoryImpl] Full response:', apiResponse);
+        throw new Error('Invalid deployment API response: body is missing');
+      }
+      
+      if (!body.service_type) {
+        console.error('[RepositoryRepositoryImpl] service_type is missing in body');
+        console.error('[RepositoryRepositoryImpl] Body keys:', Object.keys(body));
+        console.error('[RepositoryRepositoryImpl] Full body:', body);
+        throw new Error('Invalid deployment API response: service_type is missing');
+      }
       
       // 응답 정규화
       const normalizedData: DeploymentResponse = {
