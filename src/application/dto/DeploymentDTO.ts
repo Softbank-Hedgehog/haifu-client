@@ -37,7 +37,7 @@ export interface DeploymentApiResponse {
 
 // 정규화된 Deployment 응답
 export interface DeploymentResponse {
-  service_type: 'static' | 'dynamic';
+  service_type: "static" | "dynamic";
   // Static 필드
   build_commands?: string[];
   build_output_dir?: string;
