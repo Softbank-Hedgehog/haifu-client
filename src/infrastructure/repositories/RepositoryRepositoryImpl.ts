@@ -10,7 +10,7 @@ import type {
 } from '../../application/dto/RepositoryDTO';
 import type { RepositoryContent } from '../../domain/repositories/RepositoryRepository';
 import type { AgentAnalysisRequest, AgentAnalysisResponse } from '../../application/dto/AgentDTO';
-import type { DeploymentRequest, DeploymentResponse } from '../../application/dto/DeploymentDTO';
+import type { DeploymentRequest, DeploymentResponse, DeploymentApiResponse } from '../../application/dto/DeploymentDTO';
 
 export class RepositoryRepositoryImpl implements RepositoryRepository {
   async listRepositories(request?: ListRepositoriesRequest): Promise<{
@@ -150,18 +150,33 @@ export class RepositoryRepositoryImpl implements RepositoryRepository {
         throw new Error(`Deployment API error: ${response.status} ${response.statusText}`);
       }
 
-      const rawData: any = await response.json();
+      const apiResponse: DeploymentApiResponse = await response.json();
       
-      // API 응답에서 deployment_type이 오는 경우 service_type으로 변환
+      // body가 문자열인 경우 JSON 파싱
+      const body = typeof apiResponse.body === 'string' 
+        ? JSON.parse(apiResponse.body) 
+        : apiResponse.body;
+      
+      // 응답 정규화
       const normalizedData: DeploymentResponse = {
-        service_type: rawData.deployment_type 
-          ? (rawData.deployment_type.toLowerCase() as 'static' | 'dynamic')
-          : rawData.body?.deployment_type
-          ? (rawData.body.deployment_type.toLowerCase() as 'static' | 'dynamic')
-          : rawData.service_type,
-        recommendation: rawData.recommendation,
-        detected_framework: rawData.detected_framework,
+        service_type: body.service_type,
       };
+      
+      // Static 배포인 경우
+      if (body.service_type === 'static') {
+        normalizedData.build_commands = body.build_commands;
+        normalizedData.build_output_dir = body.build_output_dir;
+        normalizedData.node_version = body.node_version;
+      }
+      
+      // Dynamic 배포인 경우
+      if (body.service_type === 'dynamic') {
+        normalizedData.runtime = body.runtime;
+        normalizedData.start_command = body.start_command;
+        normalizedData.cpu = body.cpu;
+        normalizedData.memory = body.memory;
+        normalizedData.port = body.port;
+      }
       
       return normalizedData;
     } catch (error: any) {

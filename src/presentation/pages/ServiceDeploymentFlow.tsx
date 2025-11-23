@@ -48,6 +48,28 @@ const ServiceDeploymentFlow: React.FC = () => {
 
   // 배포 타입 (static 또는 dynamic)
   const [serviceType, setServiceType] = useState<'static' | 'dynamic' | null>(null);
+  
+  // Deployment API 응답 데이터 (create service 시 사용)
+  const [deploymentData, setDeploymentData] = useState<any>(null);
+  
+  // Deployment 데이터를 받아서 serviceConfig 업데이트
+  const handleDeploymentDataChange = (data: any) => {
+    setDeploymentData(data);
+    
+    // Dynamic 배포이고 CPU/Memory 정보가 있으면 serviceConfig 업데이트
+    if (data?.service_type === 'dynamic' && data.cpu && data.memory) {
+      const cpuValue = parseInt(data.cpu.replace(' vCPU', ''));
+      const memoryValue = parseInt(data.memory.replace(' GB', ''));
+      
+      if (cpuValue && memoryValue) {
+        setServiceConfig(prev => ({
+          ...prev,
+          cpu: cpuValue,
+          memory: memoryValue,
+        }));
+      }
+    }
+  };
 
   // Step 3: Service Configuration
   const [serviceConfig, setServiceConfig] = useState({
@@ -180,16 +202,26 @@ const ServiceDeploymentFlow: React.FC = () => {
     try {
       setLoading(true);
       
+      // Deployment API 응답 데이터가 있으면 우선 사용
       const deploymentConfig: ServiceDeploymentConfig = {
         repository,
         serverSpec: {
-          cpu: serviceConfig.cpu,
-          memory: serviceConfig.memory,
+          // Dynamic 배포이고 deploymentData에 cpu/memory가 있으면 사용, 아니면 serviceConfig 사용
+          cpu: (serviceType === 'dynamic' && deploymentData?.cpu) 
+            ? parseInt(deploymentData.cpu.replace(' vCPU', '')) 
+            : serviceConfig.cpu,
+          memory: (serviceType === 'dynamic' && deploymentData?.memory) 
+            ? parseInt(deploymentData.memory.replace(' GB', '')) 
+            : serviceConfig.memory,
           port: parseInt(buildConfig.port) || 8080,
         },
         runtime: buildConfig.runtime,
         buildCommand: buildConfig.buildCommand || undefined,
+        buildCommands: deploymentData?.build_commands,
+        buildOutputDir: deploymentData?.build_output_dir,
+        nodeVersion: deploymentData?.node_version,
         startCommand: buildConfig.startCommand || undefined,
+        serviceType: serviceType || undefined,
         environmentVariables: serviceConfig.environmentVariables.reduce(
           (acc, env) => {
             if (env.name && env.value) {
@@ -284,6 +316,7 @@ const ServiceDeploymentFlow: React.FC = () => {
               buildConfig={buildConfig}
               onBuildConfigChange={setBuildConfig}
               onServiceTypeChange={setServiceType}
+              onDeploymentDataChange={handleDeploymentDataChange}
               s3Url={s3Url}
               repository={repository}
               projectId={projectId || ''}

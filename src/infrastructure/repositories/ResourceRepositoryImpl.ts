@@ -83,6 +83,7 @@ export class ResourceRepositoryImpl implements ResourceRepository {
       }
 
       // buildCommand를 build_commands 배열로 변환
+      // Deployment API 응답의 build_commands가 있으면 우선 사용
       let buildCommands: string[] | undefined;
       if (config.buildCommands && config.buildCommands.length > 0) {
         buildCommands = config.buildCommands;
@@ -91,9 +92,11 @@ export class ResourceRepositoryImpl implements ResourceRepository {
         buildCommands = config.buildCommand.split('&&').map((cmd: string) => cmd.trim()).filter((cmd: string) => cmd.length > 0);
       }
 
-      // Node version 추출 (runtime에서)
+      // Node version 추출 (Deployment API 응답이 있으면 우선 사용, 아니면 runtime에서)
       let nodeVersion: string | undefined;
-      if (runtime.includes('nodejs18')) {
+      if (config.nodeVersion) {
+        nodeVersion = config.nodeVersion;
+      } else if (runtime.includes('nodejs18')) {
         nodeVersion = '18';
       } else if (runtime.includes('nodejs20')) {
         nodeVersion = '20';
@@ -103,10 +106,11 @@ export class ResourceRepositoryImpl implements ResourceRepository {
       const port = serverSpec?.port || config.containerPort || 80;
 
       // 새로운 API 형식으로 요청 생성 (user_id, project_id 제거)
+      // Deployment API 응답 데이터 우선 사용
       const createServiceRequest: CreateServiceRequest = {
         service_type: config.serviceType || 'dynamic',
         build_commands: buildCommands,
-        build_output_dir: config.buildOutputDir,
+        build_output_dir: config.buildOutputDir || undefined,
         node_version: nodeVersion,
         runtime: runtime,
         start_command: config.startCommand,

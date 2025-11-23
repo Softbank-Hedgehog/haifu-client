@@ -15,6 +15,7 @@ interface Step2BuildConfigurationProps {
   buildConfig: BuildConfig;
   onBuildConfigChange: (config: BuildConfig) => void;
   onServiceTypeChange?: (serviceType: 'static' | 'dynamic') => void;
+  onDeploymentDataChange?: (data: any) => void;
   s3Url?: string | null;
   repository: GitHubRepository;
   projectId: string;
@@ -26,6 +27,7 @@ const Step2BuildConfiguration: React.FC<Step2BuildConfigurationProps> = ({
   buildConfig,
   onBuildConfigChange,
   onServiceTypeChange,
+  onDeploymentDataChange,
   s3Url,
   repository,
   projectId,
@@ -203,49 +205,88 @@ const Step2BuildConfiguration: React.FC<Step2BuildConfigurationProps> = ({
       const response = await repositoryUseCase.determineDeploymentType(deploymentRequest);
       console.log('[Step2BuildConfiguration] Deployment API Response:', response);
 
-      // 응답에서 배포 타입 추출 (service_type만 사용)
+      // 응답에서 배포 타입 추출
       if (response && response.service_type) {
         const serviceType = response.service_type;
-        const recommendation = response.recommendation || `Deployment type detected: ${serviceType}`;
         
         // 부모 컴포넌트에 배포 타입 전달
         if (onServiceTypeChange) {
           onServiceTypeChange(serviceType);
         }
         
-        setAiRecommendation(recommendation);
+        // 부모 컴포넌트에 배포 데이터 전달 (create service 시 사용)
+        if (onDeploymentDataChange) {
+          onDeploymentDataChange(response);
+        }
 
-        // 추천 받은 내용으로 buildConfig 업데이트 (필요한 경우)
+        // 추천 받은 내용으로 buildConfig 업데이트
         const updatedConfig: BuildConfig = { ...buildConfig };
 
-        // 배포 타입에 따라 기본 설정 조정
         if (serviceType === 'static') {
-          // 정적 배포의 경우 기본 설정
-          if (!updatedConfig.buildCommand) {
+          // 정적 배포의 경우
+          if (response.build_commands && response.build_commands.length > 0) {
+            updatedConfig.buildCommand = response.build_commands.join(' && ');
+          } else if (!updatedConfig.buildCommand) {
             updatedConfig.buildCommand = 'npm run build';
           }
           if (!updatedConfig.startCommand) {
             updatedConfig.startCommand = '';
           }
+          
+          // AI 추천 메시지 구성
+          let recommendation = `✅ Static Deployment Detected\n\n`;
+          recommendation += `📦 Build Commands: ${response.build_commands?.join(', ') || 'npm run build'}\n`;
+          recommendation += `📁 Output Directory: ${response.build_output_dir || 'dist'}\n`;
+          recommendation += `🟢 Node Version: ${response.node_version || '18'}\n`;
+          
+          setAiRecommendation(recommendation);
         } else {
           // 동적 배포의 경우
-          if (!updatedConfig.startCommand) {
+          if (response.runtime) {
+            // runtime 형식 변환 (python3.11 -> python311 등)
+            let runtimeValue = response.runtime.toLowerCase();
+            if (runtimeValue.includes('python3.11')) {
+              updatedConfig.runtime = 'python311';
+            } else if (runtimeValue.includes('python3.10')) {
+              updatedConfig.runtime = 'python310';
+            } else if (runtimeValue.includes('python3.9')) {
+              updatedConfig.runtime = 'python39';
+            } else if (runtimeValue.includes('nodejs') || runtimeValue.includes('node')) {
+              updatedConfig.runtime = 'nodejs18';
+            } else if (runtimeValue.includes('java')) {
+              updatedConfig.runtime = 'java17';
+            } else if (runtimeValue.includes('go')) {
+              updatedConfig.runtime = 'go1.21';
+            } else {
+              updatedConfig.runtime = runtimeValue;
+            }
+          }
+          
+          if (response.start_command) {
+            updatedConfig.startCommand = response.start_command;
+          } else if (!updatedConfig.startCommand) {
             updatedConfig.startCommand = 'npm start';
           }
-        }
-
-        // Port는 기본값 사용
-        if (!updatedConfig.port) {
-          updatedConfig.port = '80';
+          
+          if (response.port) {
+            updatedConfig.port = response.port.toString();
+          } else if (!updatedConfig.port) {
+            updatedConfig.port = '80';
+          }
+          
+          // AI 추천 메시지 구성
+          let recommendation = `✅ Dynamic Deployment Detected\n\n`;
+          recommendation += `⚙️ Runtime: ${response.runtime || 'nodejs18'}\n`;
+          recommendation += `🚀 Start Command: ${response.start_command || 'npm start'}\n`;
+          recommendation += `💻 CPU: ${response.cpu || '1 vCPU'}\n`;
+          recommendation += `🧠 Memory: ${response.memory || '2 GB'}\n`;
+          recommendation += `🔌 Port: ${response.port || 80}\n`;
+          
+          setAiRecommendation(recommendation);
         }
 
         // 업데이트된 config 적용
         onBuildConfigChange(updatedConfig);
-
-        // 감지된 프레임워크 표시
-        if (response.detected_framework) {
-          setAiRecommendation(`${recommendation}\n\nDetected framework: ${response.detected_framework}`);
-        }
       } else {
         alert('Deployment type을 받지 못했습니다. 수동으로 입력해주세요.');
       }
