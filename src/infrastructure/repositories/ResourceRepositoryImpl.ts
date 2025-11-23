@@ -122,7 +122,7 @@ export class ResourceRepositoryImpl implements ResourceRepository {
 
       // 새로운 엔드포인트로 요청 (service 단수형)
       const response = await apiClient.post<CreateServiceResponse>(
-        `api/projects/${request.projectId}/service`,
+        `api/projects/${request.projectId}/services`,
         createServiceRequest
       );
 
