@@ -12,5 +12,6 @@ export interface ResourceRepository {
   }>;
   updateResource(id: string, projectId: string, request: UpdateResourceRequest): Promise<Resource>;
   deleteResource(id: string, projectId: string): Promise<void>;
+  deploy(serviceId: string): Promise<void>;
 }
 

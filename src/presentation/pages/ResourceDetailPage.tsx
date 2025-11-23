@@ -16,6 +16,7 @@ const ResourceDetailPage: React.FC = () => {
   const [deployments, setDeployments] = useState<Deployment[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
+  const [deploying, setDeploying] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'deployments' | 'repo' | 'logs' | 'ai'>('overview');
 
@@ -65,8 +66,22 @@ const ResourceDetailPage: React.FC = () => {
     setShowDeleteConfirm(false);
   };
 
-  const handleDeploy = () => {
-    navigate(`/projects/${projectId}/resources/${resourceId}/redeploy`);
+  const handleDeploy = async () => {
+    if (!resourceId) return;
+
+    try {
+      setDeploying(true);
+      await resourceUseCase.deploy(resourceId);
+      // 배포 성공 후 리소스 정보 새로고침
+      await loadResource();
+      // 배포 로그 페이지로 이동
+      navigate(`/projects/${projectId}/resources/${resourceId}/logs`);
+    } catch (error: any) {
+      console.error('Failed to deploy service:', error);
+      alert(error.message || 'Failed to deploy service. Please try again.');
+    } finally {
+      setDeploying(false);
+    }
   };
 
   if (loading || !resource) {
@@ -96,9 +111,15 @@ const ResourceDetailPage: React.FC = () => {
             <p className="page-subtitle">Service deployment details and monitoring</p>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <button onClick={handleDeploy} className="btn btn-primary">
-              <span className="material-symbols-outlined">rocket_launch</span>
-              Deploy
+            <button 
+              onClick={handleDeploy} 
+              className="btn btn-primary"
+              disabled={deploying}
+            >
+              <span className={`material-symbols-outlined ${deploying ? 'spin' : ''}`}>
+                {deploying ? 'sync' : 'rocket_launch'}
+              </span>
+              {deploying ? 'Deploying...' : 'Deploy'}
             </button>
             <button
               onClick={handleDeleteClick}

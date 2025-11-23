@@ -271,5 +271,14 @@ export class ResourceRepositoryImpl implements ResourceRepository {
       throw new Error(error.message || 'Failed to delete resource');
     }
   }
+
+  async deploy(serviceId: string): Promise<void> {
+    try {
+      await apiClient.post(`api/deploy/${serviceId}`, {});
+    } catch (error: any) {
+      console.error('Failed to deploy service:', error);
+      throw new Error(error.message || 'Failed to deploy service');
+    }
+  }
 }
 

@@ -34,5 +34,9 @@ export class ResourceUseCase {
   async deleteResource(id: string, projectId: string): Promise<void> {
     return this.resourceRepository.deleteResource(id, projectId);
   }
+
+  async deploy(serviceId: string): Promise<void> {
+    return this.resourceRepository.deploy(serviceId);
+  }
 }
 

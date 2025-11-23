@@ -254,9 +254,20 @@ const DeployLogPage: React.FC = () => {
     }, mockLogs.length * 500);
   };
 
-  const handleRedeploy = () => {
-    // TODO: 재배포 API 호출
-    navigate(`/projects/${projectId}/resources/${resourceId}/redeploy`);
+  const handleRedeploy = async () => {
+    if (!resourceId) return;
+
+    try {
+      setLoading(true);
+      await resourceUseCase.deploy(resourceId);
+      
+      // 배포 시작 후 로그 페이지 새로고침
+      window.location.reload();
+    } catch (error: any) {
+      console.error('Failed to redeploy service:', error);
+      alert(error.message || 'Failed to redeploy service. Please try again.');
+      setLoading(false);
+    }
   };
 
   const handleGetAiSummary = async () => {
@@ -298,9 +309,15 @@ const DeployLogPage: React.FC = () => {
             <h1>Pipeline Logs</h1>
             <p className="page-subtitle">{resource.name} - Real-time deployment logs</p>
           </div>
-          <button onClick={handleRedeploy} className="btn btn-primary">
-            <span className="material-symbols-outlined">refresh</span>
-            Re-deploy
+          <button 
+            onClick={handleRedeploy} 
+            className="btn btn-primary"
+            disabled={loading}
+          >
+            <span className={`material-symbols-outlined ${loading ? 'spin' : ''}`}>
+              {loading ? 'sync' : 'refresh'}
+            </span>
+            {loading ? 'Deploying...' : 'Re-deploy'}
           </button>
         </div>
 
