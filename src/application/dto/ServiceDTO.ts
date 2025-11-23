@@ -1,7 +1,7 @@
 // 새로운 서비스 생성 API DTOs
 
 export interface CreateServiceRequest {
-  service_type: 'static' | 'dynamic';
+  service_type: "static" | "dynamic";
   build_commands?: string[];
   build_output_dir?: string;
   node_version?: string;

@@ -47,7 +47,7 @@ const ServiceDeploymentFlow: React.FC = () => {
   });
 
   // 배포 타입 (static 또는 dynamic)
-  const [serviceType, setServiceType] = useState<'static' | 'dynamic' | null>(null);
+  const [serviceType, setServiceType] = useState<"static" | "dynamic" | null>(null);
   
   // Deployment API 응답 데이터 (create service 시 사용)
   const [deploymentData, setDeploymentData] = useState<any>(null);

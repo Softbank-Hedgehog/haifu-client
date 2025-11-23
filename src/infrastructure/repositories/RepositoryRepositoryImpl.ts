@@ -11,6 +11,7 @@ import type {
 import type { RepositoryContent } from '../../domain/repositories/RepositoryRepository';
 import type { AgentAnalysisRequest, AgentAnalysisResponse } from '../../application/dto/AgentDTO';
 import type { DeploymentRequest, DeploymentResponse, DeploymentApiResponse } from '../../application/dto/DeploymentDTO';
+import type { ChatRequest, ChatResponse, ChatApiResponse } from '../../application/dto/ChatDTO';
 
 export class RepositoryRepositoryImpl implements RepositoryRepository {
   async listRepositories(request?: ListRepositoriesRequest): Promise<{
@@ -227,14 +228,14 @@ export class RepositoryRepositoryImpl implements RepositoryRepository {
       };
       
       // Static 배포인 경우
-      if (body.service_type === 'static') {
+      if (body.service_type === "static") {
         normalizedData.build_commands = body.build_commands;
         normalizedData.build_output_dir = body.build_output_dir;
         normalizedData.node_version = body.node_version;
       }
       
       // Dynamic 배포인 경우
-      if (body.service_type === 'dynamic') {
+      if (body.service_type === "dynamic") {
         normalizedData.runtime = body.runtime;
         normalizedData.start_command = body.start_command;
         normalizedData.cpu = body.cpu;
@@ -246,6 +247,91 @@ export class RepositoryRepositoryImpl implements RepositoryRepository {
     } catch (error: any) {
       console.error('Failed to determine deployment type:', error);
       throw new Error(error.message || 'Failed to determine deployment type');
+    }
+  }
+
+  async sendChatMessage(request: ChatRequest): Promise<ChatResponse> {
+    try {
+      // Chat API URL
+      const chatApiUrl = 'https://ax1iakl8t8.execute-api.ap-northeast-2.amazonaws.com/prod/chat';
+      
+      // 직접 fetch 사용 (다른 base URL이므로 ApiClient 사용 안 함)
+      const response = await fetch(chatApiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(request),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Chat API error: ${response.status} ${response.statusText}`);
+      }
+
+      const apiResponse: any = await response.json();
+      
+      console.log('[RepositoryRepositoryImpl] Chat API Raw Response:', apiResponse);
+      
+      // 응답 형식 확인 및 body 추출
+      let body: any;
+      
+      // Lambda 응답 형식 (statusCode, headers, body)
+      if (apiResponse.statusCode !== undefined && apiResponse.body !== undefined) {
+        // body가 문자열인 경우 JSON 파싱
+        if (typeof apiResponse.body === 'string') {
+          try {
+            body = JSON.parse(apiResponse.body);
+          } catch (e) {
+            console.error('[RepositoryRepositoryImpl] Failed to parse chat body string:', e);
+            throw new Error('Failed to parse chat API response body');
+          }
+        } else {
+          // body가 이미 객체인 경우
+          body = apiResponse.body;
+        }
+      } 
+      // 직접 reply가 있는 경우
+      else if (apiResponse.reply) {
+        body = apiResponse;
+      }
+      // body 필드만 있는 경우
+      else if (apiResponse.body !== undefined) {
+        if (typeof apiResponse.body === 'string') {
+          try {
+            body = JSON.parse(apiResponse.body);
+          } catch (e) {
+            console.error('[RepositoryRepositoryImpl] Failed to parse chat body string:', e);
+            throw new Error('Failed to parse chat API response body');
+          }
+        } else {
+          body = apiResponse.body;
+        }
+      }
+      // 그 외 - 전체 응답을 body로 사용
+      else {
+        body = apiResponse;
+      }
+      
+      console.log('[RepositoryRepositoryImpl] Parsed chat body:', body);
+      
+      // body가 없거나 reply가 없으면 에러
+      if (!body) {
+        console.error('[RepositoryRepositoryImpl] Chat body is null or undefined');
+        throw new Error('Invalid chat API response: body is missing');
+      }
+      
+      if (!body.reply) {
+        console.error('[RepositoryRepositoryImpl] reply is missing in body');
+        console.error('[RepositoryRepositoryImpl] Body keys:', Object.keys(body));
+        throw new Error('Invalid chat API response: reply is missing');
+      }
+      
+      return {
+        reply: body.reply,
+      };
+    } catch (error: any) {
+      console.error('Failed to send chat message:', error);
+      throw new Error(error.message || 'Failed to send chat message');
     }
   }
 }

@@ -14,7 +14,7 @@ interface BuildConfig {
 interface Step2BuildConfigurationProps {
   buildConfig: BuildConfig;
   onBuildConfigChange: (config: BuildConfig) => void;
-  onServiceTypeChange?: (serviceType: 'static' | 'dynamic') => void;
+  onServiceTypeChange?: (serviceType: "static" | "dynamic") => void;
   onDeploymentDataChange?: (data: any) => void;
   s3Url?: string | null;
   repository: GitHubRepository;
@@ -245,7 +245,7 @@ const Step2BuildConfiguration: React.FC<Step2BuildConfigurationProps> = ({
         // 추천 받은 내용으로 buildConfig 업데이트
         const updatedConfig: BuildConfig = { ...buildConfig };
 
-        if (serviceType === 'static') {
+        if (serviceType === "static") {
           // 정적 배포의 경우
           if (response.build_commands && response.build_commands.length > 0) {
             updatedConfig.buildCommand = response.build_commands.join(' && ');

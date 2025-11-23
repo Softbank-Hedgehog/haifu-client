@@ -24,7 +24,7 @@ export interface ServiceDeploymentConfig {
   buildCommand?: string;
   startCommand?: string;
   runtime?: string;
-  serviceType?: 'static' | 'dynamic';
+  serviceType?: "static" | "dynamic";
   buildCommands?: string[];
   buildOutputDir?: string;
   nodeVersion?: string;

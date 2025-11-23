@@ -10,7 +10,7 @@ interface ServiceConfig {
 interface Step3ServiceConfigurationProps {
   serviceConfig: ServiceConfig;
   onServiceConfigChange: (config: ServiceConfig) => void;
-  serviceType?: 'static' | 'dynamic' | null;
+  serviceType?: "static" | "dynamic" | null;
 }
 
 const Step3ServiceConfiguration: React.FC<Step3ServiceConfigurationProps> = ({
@@ -122,7 +122,7 @@ const Step3ServiceConfiguration: React.FC<Step3ServiceConfigurationProps> = ({
               value={serviceConfig.cpu}
               onChange={(e) => handleCpuChange(parseFloat(e.target.value))}
               required
-              disabled={serviceType === 'static'}
+              disabled={serviceType === "static"}
             >
               {cpuOptions.map((cpu) => (
                 <option key={cpu} value={cpu}>
@@ -131,7 +131,7 @@ const Step3ServiceConfiguration: React.FC<Step3ServiceConfigurationProps> = ({
               ))}
             </select>
             <p className="form-hint">
-              {serviceType === 'static' 
+              {serviceType === "static" 
                 ? 'CPU and Memory are not configurable for static deployments.' 
                 : 'Select the CPU specification for your service.'}
             </p>
@@ -144,7 +144,7 @@ const Step3ServiceConfiguration: React.FC<Step3ServiceConfigurationProps> = ({
               value={serviceConfig.memory}
               onChange={(e) => handleMemoryChange(parseFloat(e.target.value))}
               required
-              disabled={serviceType === 'static'}
+              disabled={serviceType === "static"}
             >
               {availableMemoryOptions.map((memory) => (
                 <option key={memory} value={memory}>
@@ -153,7 +153,7 @@ const Step3ServiceConfiguration: React.FC<Step3ServiceConfigurationProps> = ({
               ))}
             </select>
             <p className="form-hint">
-              {serviceType === 'static' 
+              {serviceType === "static" 
                 ? 'CPU and Memory are not configurable for static deployments.' 
                 : 'Select the memory specification for your service (compatible with selected CPU).'}
             </p>

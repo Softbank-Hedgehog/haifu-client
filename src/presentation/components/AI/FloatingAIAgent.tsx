@@ -1,9 +1,12 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
+import { useDependencies } from '../../context/DependencyContext';
+import { RepositoryUseCase } from '../../../application/useCases/RepositoryUseCase';
 
 const FloatingAIAgent: React.FC = () => {
   const [messages, setMessages] = useState<Array<{ role: 'user' | 'agent'; content: string }>>([]);
   const [inputValue, setInputValue] = useState('');
+  const [sending, setSending] = useState(false);
   const location = useLocation();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -11,6 +14,9 @@ const FloatingAIAgent: React.FC = () => {
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const resizerRef = useRef<HTMLDivElement>(null);
+  
+  const { repositoryRepository } = useDependencies();
+  const repositoryUseCase = useMemo(() => new RepositoryUseCase(repositoryRepository), [repositoryRepository]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -81,21 +87,40 @@ const FloatingAIAgent: React.FC = () => {
     return 'I can help you with project management, deployment strategies, and troubleshooting.';
   };
 
-  const handleSend = async () => {
-    if (!inputValue.trim()) return;
+  const sendMessage = async (message: string) => {
+    if (!message.trim() || sending) return;
 
-    const userMessage = { role: 'user' as const, content: inputValue };
+    const userMessage = { role: 'user' as const, content: message };
     setMessages((prev) => [...prev, userMessage]);
-    setInputValue('');
+    setSending(true);
 
-    // TODO: 실제 AI API 호출
-    setTimeout(() => {
+    try {
+      // 실제 Chat API 호출
+      const response = await repositoryUseCase.sendChatMessage({ message: message.trim() });
+      
       const agentMessage = {
         role: 'agent' as const,
-        content: 'This is a placeholder response. AI integration will be implemented here.',
+        content: response.reply || 'I apologize, but I couldn\'t generate a response. Please try again.',
       };
       setMessages((prev) => [...prev, agentMessage]);
-    }, 500);
+    } catch (error: any) {
+      console.error('[FloatingAIAgent] Failed to send chat message:', error);
+      const errorMessage = {
+        role: 'agent' as const,
+        content: `Error: ${error.message || 'Failed to get response. Please try again.'}`,
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const handleSend = async () => {
+    if (!inputValue.trim() || sending) return;
+
+    const messageToSend = inputValue.trim();
+    setInputValue('');
+    await sendMessage(messageToSend);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -151,19 +176,9 @@ const FloatingAIAgent: React.FC = () => {
                       className="ai-action-btn"
                       onClick={(e) => {
                         e.stopPropagation();
-                        const message = 'Help me configure my deployment';
-                        const userMessage = { role: 'user' as const, content: message };
-                        setMessages((prev) => [...prev, userMessage]);
-                        
-                        // TODO: 실제 AI API 호출
-                        setTimeout(() => {
-                          const agentMessage = {
-                            role: 'agent' as const,
-                            content: 'I\'ll help you configure your deployment. What specific aspects would you like to configure?',
-                          };
-                          setMessages((prev) => [...prev, agentMessage]);
-                        }, 500);
+                        sendMessage('Help me configure my deployment');
                       }}
+                      disabled={sending}
                     >
                       Help me configure
                     </button>
@@ -171,19 +186,9 @@ const FloatingAIAgent: React.FC = () => {
                       className="ai-action-btn"
                       onClick={(e) => {
                         e.stopPropagation();
-                        const message = 'Analyze my deployment logs';
-                        const userMessage = { role: 'user' as const, content: message };
-                        setMessages((prev) => [...prev, userMessage]);
-                        
-                        // TODO: 실제 AI API 호출
-                        setTimeout(() => {
-                          const agentMessage = {
-                            role: 'agent' as const,
-                            content: 'I\'ll analyze your deployment logs. Let me check the recent logs and identify any issues.',
-                          };
-                          setMessages((prev) => [...prev, agentMessage]);
-                        }, 500);
+                        sendMessage('Analyze my deployment logs');
                       }}
+                      disabled={sending}
                     >
                       Analyze logs
                     </button>
@@ -191,19 +196,9 @@ const FloatingAIAgent: React.FC = () => {
                       className="ai-action-btn"
                       onClick={(e) => {
                         e.stopPropagation();
-                        const message = 'Optimize my settings';
-                        const userMessage = { role: 'user' as const, content: message };
-                        setMessages((prev) => [...prev, userMessage]);
-                        
-                        // TODO: 실제 AI API 호출
-                        setTimeout(() => {
-                          const agentMessage = {
-                            role: 'agent' as const,
-                            content: 'I\'ll help you optimize your settings. Let me analyze your current configuration and suggest improvements.',
-                          };
-                          setMessages((prev) => [...prev, agentMessage]);
-                        }, 500);
+                        sendMessage('Optimize my settings');
                       }}
+                      disabled={sending}
                     >
                       Optimize settings
                     </button>
@@ -234,10 +229,11 @@ const FloatingAIAgent: React.FC = () => {
           <input
             type="text"
             className="ai-input"
-            placeholder="Ask Agent Anything..."
+            placeholder={sending ? 'Sending...' : 'Ask Agent Anything...'}
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyPress={handleKeyPress}
+            disabled={sending}
           />
           <button 
             className="ai-send-btn" 
@@ -245,9 +241,11 @@ const FloatingAIAgent: React.FC = () => {
               e.stopPropagation();
               handleSend();
             }}
-            disabled={!inputValue.trim()}
+            disabled={!inputValue.trim() || sending}
           >
-            <span className="material-symbols-outlined">send</span>
+            <span className={`material-symbols-outlined ${sending ? 'spin' : ''}`}>
+              {sending ? 'sync' : 'send'}
+            </span>
           </button>
         </div>
       </div>

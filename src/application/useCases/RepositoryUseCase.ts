@@ -35,6 +35,10 @@ export class RepositoryUseCase {
   async determineDeploymentType(request: DeploymentRequest): Promise<DeploymentResponse> {
     return await this.repositoryRepository.determineDeploymentType(request);
   }
+
+  async sendChatMessage(request: { message: string }): Promise<{ reply: string }> {
+    return await this.repositoryRepository.sendChatMessage(request);
+  }
 }
 
 
